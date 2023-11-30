@@ -1,0 +1,10 @@
+{
+    "log": {
+        "path": "./logs",
+        "fileName": "go-note.log"
+    },
+    "web": {
+        "host": "localhost:8888",
+        "basePath": "/"
+    }
+}

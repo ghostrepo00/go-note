@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{{ .title }}</title>
+        <script src="/assets/js/htmx.min.js"></script>
+        <link href="/assets/style/tailwind.css" rel="stylesheet">
+        <link href="/assets/style/main.css" rel="stylesheet">
+    </head>
+    <body class="bg-base-800 text-base-500">
+        <div class="flex flex-col min-h-screen">
+            <div class="p-2" hx-target="#content">
+                <ul>
+                    <li><div hx-get="/default">Home</div></li>
+                    <li><div hx-get="/webtag">Webtag</div></li>
+                </ul>
+            </div>
+
+            <div id="content" class="flex-grow p-2">
+                
+            </div>
+
+            <div class="p-2">footer</div>
+        </div>
+    </body>
+</html>
