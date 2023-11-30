@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"io"
 	"log/slog"
 	"os"
@@ -40,8 +41,13 @@ func main() {
 			defer fileLog.Close()
 
 			slog.Info("App started")
-			config.SupabaseUrl = os.Getenv("SUPABASE_URL")
-			config.SupabaseKey = os.Getenv("SUPABASE_KEY")
+			supabaseConnection := os.Getenv("SUPABASE")
+			if supabaseConnection == "" {
+				panic(errors.New("SUPABASE env var is not found"))
+			}
+			supabasePair := strings.Split(supabaseConnection, "|")
+			config.SupabaseUrl = supabasePair[0]
+			config.SupabaseKey = supabasePair[1]
 
 			webserver := app.NewWebServer(config)
 			webserver.Run()
