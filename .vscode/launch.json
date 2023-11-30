@@ -23,6 +23,25 @@
                 "tailwindcss", "-i", "web/assets/style/tailwind.input.css", "-o", "web/assets/style/tailwind.css", "--watch"
             ]
         },
+        {
+            "name": "attach-to-air",
+            "type": "go",
+            "request": "attach",
+            "mode": "remote",
+            "port": 2345,
+            "host": "127.0.0.1",
+            "apiVersion": 2,
+            "showLog": true,
+            "trace": "verbose"
+        },
+        {
+            "name": "air",  // can only be executed from terminal
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeArgs": ["-c", ".air.toml"],
+            "runtimeExecutable": "air"
+        }
     ],
     "compounds": [
         {

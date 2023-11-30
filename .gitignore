@@ -23,3 +23,4 @@ logs/*
 !logs/.keep
 tmp/*
 node_modules/*
+web/assets/style/tailwind.css
