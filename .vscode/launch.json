@@ -33,20 +33,20 @@
             "showLog": true,
             "apiVersion": 2,
             "trace": "verbose"
-        },
-        {
+        }
+        /*{
             "name": "air",  // can only be executed from terminal
             "type": "node",
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "runtimeArgs": ["-c", ".air.toml"],
             "runtimeExecutable": "air"
-        }
+        }*/
     ],
     "compounds": [
         {
-            "name": "web-server-tailwind-watch",
-            "configurations": ["tailwind-watch", "web-server"]
+            "name": "tailwind-watch-attach-delve",
+            "configurations": ["tailwind-watch", "attach-delve"]
         }
     ]
 }
