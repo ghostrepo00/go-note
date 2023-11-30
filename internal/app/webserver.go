@@ -30,6 +30,7 @@ func ConfigureWebRouter(router *gin.Engine, appConfig *config.AppConfig, dbClien
 	router.SetHTMLTemplate(t)
 
 	router.Static("/assets", "web/assets")
+	router.StaticFile("/favicon.ico", "web/favicon.ico")
 
 	router.GET("", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "index.html", nil)
@@ -53,7 +54,6 @@ func (r *webserver) Run() {
 		}
 		router := gin.Default()
 		router.Use(cors.Default())
-		//api.ConfigureApiRouter(router, appConfig, dbClient)
 		ConfigureWebRouter(router, r.appConfig, dbClient)
 		router.Run(r.appConfig.Web.Host)
 	}
