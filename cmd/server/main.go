@@ -49,8 +49,8 @@ func main() {
 			config.SupabaseUrl = supabasePair[0]
 			config.SupabaseKey = supabasePair[1]
 
-			webserver := app.NewWebServer(config)
-			webserver.Run()
+			webServer := app.NewWebServer(config)
+			webServer.Run()
 
 		} else {
 			panic(err)
