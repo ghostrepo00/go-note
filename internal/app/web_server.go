@@ -27,10 +27,13 @@ func ConfigureWebRouter(router *gin.Engine, appConfig *config.AppConfig, dbClien
 	router.Static("/assets", "web/assets")
 	router.StaticFile("/favicon.ico", "web/favicon.ico")
 
-	service := NewAppService(appConfig, dbClient)
-	handler := NewWebHandler(appConfig, service)
+	var service AppService = NewAppService(appConfig, dbClient)
+	var handler WebHandler = NewWebHandler(appConfig, service)
 
 	router.GET("", handler.Default)
+	router.GET("/:id", handler.GetById)
+	router.DELETE("/:id", handler.DeleteById)
+	router.POST("/save", handler.Save)
 }
 
 func (r *webServer) Run() {

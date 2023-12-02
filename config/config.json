@@ -4,6 +4,7 @@
         "fileName": "go-note.log"
     },
     "web": {
+        "title": "Note-X",
         "host": "localhost:8888",
         "basePath": "/"
     }

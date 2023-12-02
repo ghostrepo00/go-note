@@ -4,24 +4,90 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ .title }}</title>
-        <script src="/assets/js/htmx.min.js"></script>
+        <script defer src="/assets/js/htmx.min.js"></script>
+        <script defer src="/assets/js/alpine.min.js"></script>
         <link href="/assets/style/tailwind.css" rel="stylesheet">
         <link href="/assets/style/main.css" rel="stylesheet">
     </head>
-    <body class="bg-base-800 text-base-500">
+    <body class="bg-base-900 text-base-100">
         <div class="flex flex-col min-h-screen">
-            <div class="p-2" hx-target="#content">
-                <ul>
-                    <li><div hx-get="/default">Home</div></li>
-                    <li><div hx-get="/webtag">Webtag</div></li>
+            <div class="p-2" hx-target="#content">                
+                <ul class="flex flex-wrap items-center justify-center text-gray-900 dark:text-white">
+                    <li>
+                        <a href="/" class="me-4 hover:underline md:me-6 ">Home</a>
+                    </li>
+                    <li>
+                        <a href="#" class="me-4 hover:underline md:me-6">Premium</a>
+                    </li>
                 </ul>
             </div>
 
-            <div id="content" class="flex-grow p-2">
-                
+            <div id="content" class="flex-grow flex flex-row p-2 w-full h-full">
+                <div class="flex-none w-14 h-14">
+                    
+                </div>
+                <div class="grow h-fit" x-data="{ content: '{{.content}}' }" x-init="$refs.contentx.textContent=content">    
+                    <form hx-post="/save">
+                        <div x-ref="contentx" @input="content = $event.target.textContent" contenteditable="true" class="bg-base-600 w-1/12 min-h-fit overflow-y-auto"></div>
+                        <input title="=" type="hidden" name="content" x-model="content"/>
+                        <!-- <textarea title="content" cols="200" rows="30" class="p-2 border-none outline-none overflow-y-auto bg-base-700 bg-gradient-to-r bg-opacity-50"></textarea> -->
+                        <div class="flex gap-2">
+                            <label for="id">Url</label><input class="text-base-950" id="id" type="text" value="{{.id}}"/>
+                            <label for="password">Password</label><input class="text-base-950" id="password" type="text" value="{{.password}}"/>
+                            <input id="isEncrypted" type="checkbox" value="{{.isEncrypted}}"/><label for="isEncrypted">Encrypt</label>
+                            <button type="submit">Save</button>                            
+                            <button type="button" id="deleteButton">Delete</button>                            
+                        </div>
+                    </form>                      
+                    <dialog>
+                        <p>Greetings, one and all!</p>
+                        <form method="dialog">
+                          <button type="button" hx-trigger="click" hx-delete="/{{.id}}">OK</button>
+                        </form>
+                    </dialog>
+                </div>
+                <div class="flex-none w-14 h-14">
+                    
+                </div>
             </div>
 
-            <div class="p-2">footer</div>
+            <div class="p-2">
+                <ul class="flex flex-wrap items-center justify-center text-gray-900 dark:text-white">
+                    <li>
+                        <a href="#" class="me-4 hover:underline md:me-6">Contact</a>
+                    </li>
+                </ul>
+            </div>
         </div>
+        <script>
+            const counter = (function () {
+                let privateCounter = 0;
+                function changeBy(val) {
+                    privateCounter += val;
+                }
+
+                const dialog = document.querySelector("dialog");
+                const showButton = document.getElementById("deleteButton")
+
+                // "Show the dialog" button opens the dialog modally
+                showButton.addEventListener("click", () => {
+                    dialog.showModal();
+                });
+
+                return {
+                    increment() {
+                        changeBy(1);
+                    },
+
+                    decrement() {
+                        changeBy(-1);
+                    },
+
+                    value() {
+                        return privateCounter;
+                    },
+                };
+            })();
+        </script>
     </body>
 </html>

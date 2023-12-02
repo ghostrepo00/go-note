@@ -11,6 +11,7 @@ type LogSetting struct {
 }
 
 type WebServerSetting struct {
+	Title    string
 	Host     string
 	BasePath string
 }
