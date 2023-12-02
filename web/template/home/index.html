@@ -6,6 +6,7 @@
         <title>{{ .title }}</title>
         <script defer src="/assets/js/htmx.min.js"></script>
         <script defer src="/assets/js/alpine.min.js"></script>
+        <script defer src="/assets/js/app.js"></script>
         <link href="/assets/style/tailwind.css" rel="stylesheet">
         <link href="/assets/style/main.css" rel="stylesheet">
     </head>
@@ -36,15 +37,20 @@
                             <label for="password">Password</label><input class="text-base-950" name="password" type="text" x-model="password"/>
                             <input name="is_encrypted" type="checkbox" value="true" x-model="is_encrypted"/><label for="is_encrypted">Encrypt</label>
                             <button type="submit">Save</button>                            
-                            <button type="button" id="deleteButton">Delete</button>                            
+                            <button type="button" id="deleteButton" x-show="id">Delete</button>                            
                         </div>
                     </form>                      
                     <dialog>
                         <p>Do you want to delete?</p>
                         <form method="dialog">
                           <button type="button" hx-trigger="click" hx-delete="/{{.id}}">OK</button>
+                          <button type="button" id="cancelButton" hx-trigger="click">Cancel</button>
                         </form>
                     </dialog>
+
+                    <div x-data="{'value': 'xxx'}">
+                        {{template "content" .}}
+                    </div>
                 </div>
                 <div class="flex-none w-14 h-14">
                     
@@ -59,35 +65,5 @@
                 </ul>
             </div>
         </div>
-        <script>
-            const counter = (function () {
-                let privateCounter = 0;
-                function changeBy(val) {
-                    privateCounter += val;
-                }
-
-                const dialog = document.querySelector("dialog");
-                const showButton = document.getElementById("deleteButton")
-
-                // "Show the dialog" button opens the dialog modally
-                showButton.addEventListener("click", () => {
-                    dialog.showModal();
-                });
-
-                return {
-                    increment() {
-                        changeBy(1);
-                    },
-
-                    decrement() {
-                        changeBy(-1);
-                    },
-
-                    value() {
-                        return privateCounter;
-                    },
-                };
-            })();
-        </script>
     </body>
 </html>
