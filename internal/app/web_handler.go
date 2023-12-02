@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -35,10 +36,8 @@ func (r *webHandler) GetById(c *gin.Context) {
 	id := c.Param("id")
 	slog.Info("request id", "id", id)
 	a, _ := r.Service.GetbyId(id)
-	data := make(map[string]string)
-	data["content"] = a[0].Content
-	data["id"] = a[0].Id
-	c.HTML(http.StatusOK, "index.html", data)
+	x, _ := json.Marshal(a[0])
+	c.HTML(http.StatusOK, "index.html", gin.H{"id": id, "data": string(x)})
 }
 
 func (r *webHandler) DeleteById(c *gin.Context) {
