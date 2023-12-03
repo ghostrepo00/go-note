@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"html/template"
 	"log/slog"
+	"net/http"
 
 	"github.com/ghostrepo00/go-note/config"
 	"github.com/ghostrepo00/go-note/internal/pkg/model"
@@ -23,6 +24,9 @@ func NewWebServer(config *config.AppConfig) *webServer {
 func ConfigureWebRouter(appConfig *config.AppConfig, dbClient *supabase.Client) *gin.Engine {
 	router := gin.Default()
 	router.Use(cors.Default())
+	router.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
+		c.HTML(http.StatusNotFound, "error", gin.H{"Status": 500, "Message": "Not Found", "Description": err.(error)})
+	}))
 
 	t := template.Must(template.ParseGlob("web/template/**/*.html"))
 	router.SetHTMLTemplate(t)
