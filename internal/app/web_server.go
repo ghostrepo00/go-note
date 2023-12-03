@@ -20,7 +20,10 @@ func NewWebServer(config *config.AppConfig) *webServer {
 	return &webServer{config}
 }
 
-func ConfigureWebRouter(router *gin.Engine, appConfig *config.AppConfig, dbClient *supabase.Client) {
+func ConfigureWebRouter(appConfig *config.AppConfig, dbClient *supabase.Client) *gin.Engine {
+	router := gin.Default()
+	router.Use(cors.Default())
+
 	t := template.Must(template.ParseGlob("web/template/**/*.html"))
 	router.SetHTMLTemplate(t)
 
@@ -35,6 +38,8 @@ func ConfigureWebRouter(router *gin.Engine, appConfig *config.AppConfig, dbClien
 	router.DELETE("/:id", handler.DeleteById)
 	router.POST("", handler.Save)
 	router.POST("/:id", handler.Save)
+
+	return router
 }
 
 func (r *webServer) Run() {
@@ -49,9 +54,6 @@ func (r *webServer) Run() {
 				slog.Info(result[0].Value)
 			}
 		}
-		router := gin.Default()
-		router.Use(cors.Default())
-		ConfigureWebRouter(router, r.appConfig, dbClient)
-		router.Run(r.appConfig.Web.Host)
+		ConfigureWebRouter(r.appConfig, dbClient).Run(r.appConfig.Web.Host)
 	}
 }
