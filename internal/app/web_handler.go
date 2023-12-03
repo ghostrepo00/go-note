@@ -27,15 +27,16 @@ func NewWebHandler(appConfig *config.AppConfig, service AppService) *webHandler 
 }
 
 func (r *webHandler) Default(c *gin.Context) {
-	p := make(map[string]string)
-	p["title"] = r.AppConfig.Web.Title
-	c.HTML(http.StatusOK, "index.html", p)
+	c.HTML(http.StatusOK, "index.html", gin.H{"title": r.AppConfig.Web.Title, "data": "{'content':'', 'value':'z'}"})
 }
 
 func (r *webHandler) GetById(c *gin.Context) {
 	id := c.Param("id")
 	slog.Info("request id", "id", id)
 	a, _ := r.Service.GetbyId(id)
+	if len(a) == 0 {
+		a = append(a, &model.FormData{Id: id})
+	}
 	x, _ := json.Marshal(a[0])
 	c.HTML(http.StatusOK, "index.html", gin.H{"id": id, "data": string(x)})
 }
@@ -48,10 +49,12 @@ func (r *webHandler) DeleteById(c *gin.Context) {
 }
 
 func (r *webHandler) Save(c *gin.Context) {
+	id := c.Param("id")
 	formData := &model.FormData{}
 	c.Bind(formData)
-	if err := r.Service.Save(formData); err != nil {
-		slog.Error("error", err)
+
+	if outputPassword, err := r.Service.Save(id, formData); err != nil {
+		slog.Error("error", err, outputPassword)
 		c.AbortWithStatus(http.StatusInternalServerError)
 	} else {
 		c.Header("HX-Redirect", "/"+formData.Id)

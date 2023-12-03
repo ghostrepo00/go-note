@@ -12,33 +12,26 @@
     </head>
     <body class="bg-base-900 text-base-100">
         <div class="flex flex-col min-h-screen">
-            <div class="p-2" hx-target="#content">                
+            <div class="p-2">
                 <ul class="flex flex-wrap items-center justify-center text-gray-900 dark:text-white">
                     <li>
                         <a href="/" class="me-4 hover:underline md:me-6 ">Home</a>
                     </li>
-                    <li>
-                        <a href="#" class="me-4 hover:underline md:me-6">Premium</a>
-                    </li>
                 </ul>
             </div>
 
-            <div id="content" class="flex-grow flex flex-row p-2 w-full h-full">
-                <div class="flex-none w-14 h-14">
-                    
-                </div>
-                <div class="grow h-fit" x-data="{{.data}}" x-init="$refs.contentx.textContent=content">    
-                    <form hx-post="/save">
-                        <div x-ref="contentx" @input="content = $event.target.textContent" contenteditable="true" class="bg-base-600 w-1/12 min-h-fit overflow-y-auto"></div>
-                        <input title="=" type="hidden" name="content" x-model="content"/>
-                        <!-- <textarea title="content" cols="200" rows="30" class="p-2 border-none outline-none overflow-y-auto bg-base-700 bg-gradient-to-r bg-opacity-50"></textarea> -->
+            <div id="content" class="flex-grow flex flex-col p-2">
+                <div class="grow h-fit flex flex-col" x-data="{{.data}}" x-init="$refs.contentx.textContent=content">    
+                    <form hx-post="/{{.id}}" class="flex flex-col flex-grow gap-2">
                         <div class="flex gap-2">
                             <label for="id">Url</label><input class="text-base-950" name="id" type="text" x-model="id"/>
-                            <label for="password">Password</label><input class="text-base-950" name="password" type="text" x-model="password"/>
+                            <label for="password">Password</label><input class="text-base-950" name="password" type="text"/>
                             <input name="is_encrypted" type="checkbox" value="true" x-model="is_encrypted"/><label for="is_encrypted">Encrypt</label>
-                            <button type="submit">Save</button>                            
-                            <button type="button" id="deleteButton" x-show="id">Delete</button>                            
+                            <button type="submit" class="bg-base-300 text-base-950 px-2 rounded-lg">Save</button>                            
+                            <button type="button" id="deleteButton" x-show="id" class="bg-base-300 text-base-950 px-2 rounded-lg">Delete</button>                            
                         </div>
+                        <div x-ref="contentx" @input="content = $event.target.textContent" contenteditable="true" class="bg-base-600 flex-grow p-4"></div>
+                        <input title="=" type="hidden" name="content" x-model="content"/>
                     </form>                      
                     <dialog>
                         <p>Do you want to delete?</p>
@@ -47,13 +40,7 @@
                           <button type="button" id="cancelButton" hx-trigger="click">Cancel</button>
                         </form>
                     </dialog>
-
-                    <div x-data="{'value': 'xxx'}">
-                        {{template "content" .}}
-                    </div>
-                </div>
-                <div class="flex-none w-14 h-14">
-                    
+                    {{template "content" .}}
                 </div>
             </div>
 

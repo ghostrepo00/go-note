@@ -4,12 +4,12 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	"log/slog"
 	"math/big"
 
 	"github.com/ghostrepo00/go-note/config"
 	"github.com/ghostrepo00/go-note/internal/pkg/model"
 	"github.com/supabase-community/supabase-go"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type appService struct {
@@ -20,7 +20,7 @@ type appService struct {
 type AppService interface {
 	GetbyId(id string) (result []*model.FormData, err error)
 	DeletebyId(id string) (err error)
-	Save(data *model.FormData) error
+	Save(id string, data *model.FormData) (outputPassword string, err error)
 }
 
 func NewAppService(appConfig *config.AppConfig, dbClient *supabase.Client) *appService {
@@ -43,7 +43,7 @@ func GenerateRandomId(length int) (string, error) {
 
 func (r *appService) GetbyId(id string) (result []*model.FormData, err error) {
 	if id != "" {
-		_, err = r.DbClient.From("notes").Select("id, content, password, is_encrypted", "", false).Eq("id", id).ExecuteTo(&result)
+		_, err = r.DbClient.From("notes").Select("id, content, is_encrypted", "", false).Eq("id", id).ExecuteTo(&result)
 		fmt.Print(result, err)
 	}
 	return
@@ -56,18 +56,57 @@ func (r *appService) DeletebyId(id string) (err error) {
 	return
 }
 
-func (r *appService) Save(data *model.FormData) (err error) {
-	if data.Id == "" {
-		if data.Id, err = GenerateRandomId(5); err == nil {
-			a, cc, d := r.DbClient.From("notes").Select("id", "", false).Eq("id", data.Id).ExecuteString()
-			slog.Info("", "a", a, "e", d, "c", cc)
+func (r *appService) GenerateNewId() (result string, err error) {
+	for i := 0; i < 3; i++ {
+		if result, err = GenerateRandomId(5); err == nil {
+			a, _, _ := r.DbClient.From("notes").Select("id", "", false).Eq("id", result).Single().ExecuteString()
+			if len(a) == 0 {
+				return
+			}
 		}
 	}
 
-	if a, b, err := r.DbClient.From("notes").Upsert(&data, "", "", "").Execute(); err != nil {
-		return errors.New("ssssssssssssssssssssssssss")
-	} else {
-		slog.Info("supabase", "a", a, "b", b, "c", err)
+	return "", errors.New("Failed to generate new id")
+}
+
+func HashPassword(password string) string {
+	bytes, _ := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes)
+}
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
+
+func (r *appService) Save(id string, data *model.FormData) (outputPassword string, err error) {
+
+	var hashedPass string
+	if data.Password != "" {
+		hashedPass = HashPassword(data.Password)
+	} else if id == "" {
+		p, _ := GenerateRandomId(5)
+		hashedPass = HashPassword(p)
 	}
-	return nil
+
+	if id == "" {
+		id, err = r.GenerateNewId()
+	} else {
+		var resultSet *model.FormData
+		_, err = r.DbClient.From("notes").Select("password", "", false).Eq("id", id).Single().ExecuteTo(&resultSet)
+		if err != nil {
+			return
+		} else {
+			if !CheckPasswordHash(resultSet.Password, hashedPass) {
+				err = errors.New("Invalid password")
+				return
+			}
+		}
+	}
+
+	data.Id = id
+	data.Password = hashedPass
+	_, _, err = r.DbClient.From("notes").Upsert(&data, "", "", "").Execute()
+
+	return
 }

@@ -33,7 +33,8 @@ func ConfigureWebRouter(router *gin.Engine, appConfig *config.AppConfig, dbClien
 	router.GET("", handler.Default)
 	router.GET("/:id", handler.GetById)
 	router.DELETE("/:id", handler.DeleteById)
-	router.POST("/save", handler.Save)
+	router.POST("", handler.Save)
+	router.POST("/:id", handler.Save)
 }
 
 func (r *webServer) Run() {
