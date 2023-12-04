@@ -27,18 +27,15 @@ func NewWebHandler(appConfig *config.AppConfig, service AppService) *webHandler 
 }
 
 func (r *webHandler) Default(c *gin.Context) {
-	c.HTML(http.StatusOK, "index.html", gin.H{"title": r.AppConfig.Web.Title, "data": "{'content':'', 'value':'z'}"})
+	c.HTML(http.StatusOK, "index", gin.H{"title": r.AppConfig.Web.Title, "data": "{'content':'', 'value':'z'}"})
 }
 
 func (r *webHandler) GetById(c *gin.Context) {
 	id := c.Param("id")
 	slog.Info("request id", "id", id)
 	a, _ := r.Service.GetbyId(id)
-	// if len(a) == 0 {
-	// 	a = append(a, &model.FormData{Id: id})
-	// }
 	x, _ := json.Marshal(a[0])
-	c.HTML(http.StatusOK, "index.html", gin.H{"id": id, "data": string(x)})
+	c.HTML(http.StatusOK, "index", gin.H{"id": id, "data": string(x)})
 }
 
 func (r *webHandler) DeleteById(c *gin.Context) {

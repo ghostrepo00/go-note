@@ -1,56 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{{ .title }}</title>
-        <script defer src="/assets/js/htmx.min.js"></script>
-        <script defer src="/assets/js/alpine.min.js"></script>
-        <script defer src="/assets/js/app.js"></script>
-        <link href="/assets/style/tailwind.css" rel="stylesheet">
-        <link href="/assets/style/main.css" rel="stylesheet">
-    </head>
-    <body class="bg-base-900 text-base-100">
-        <div class="flex flex-col min-h-screen">
-            <div class="p-2">
-                <ul class="flex flex-wrap items-center justify-center text-gray-900 dark:text-white">
-                    <li>
-                        <a href="/" class="me-4 hover:underline md:me-6 ">Home</a>
-                    </li>
-                </ul>
-            </div>
-
-            <div id="content" class="flex-grow flex flex-col p-2">
-                <div class="grow h-fit flex flex-col" x-data="{{.data}}" x-init="$refs.contentx.textContent=content">    
-                    <form hx-post="/{{.id}}" class="flex flex-col flex-grow gap-2">
-                        <div class="flex gap-2">
-                            <label for="id">Url</label><input class="text-base-950" name="id" type="text" x-model="id"/>
-                            <label for="password">Password</label><input class="text-base-950" name="password" type="text"/>
-                            <input name="is_encrypted" type="checkbox" value="true" x-model="is_encrypted"/><label for="is_encrypted">Encrypt</label>
-                            <button type="submit" class="bg-base-300 text-base-950 px-2 rounded-lg">Save</button>                            
-                            <button type="button" id="deleteButton" x-show="id" class="bg-base-300 text-base-950 px-2 rounded-lg">Delete</button>                            
-                        </div>
-                        <div x-ref="contentx" @input="content = $event.target.textContent" contenteditable="true" class="bg-base-600 flex-grow p-4"></div>
-                        <input title="=" type="hidden" name="content" x-model="content"/>
-                    </form>                      
-                    <dialog>
-                        <p>Do you want to delete?</p>
-                        <form method="dialog">
-                          <button type="button" hx-trigger="click" hx-delete="/{{.id}}">OK</button>
-                          <button type="button" id="cancelButton" hx-trigger="click">Cancel</button>
-                        </form>
-                    </dialog>
-                    {{template "content" .}}
-                </div>
-            </div>
-
-            <div class="p-2">
-                <ul class="flex flex-wrap items-center justify-center text-gray-900 dark:text-white">
-                    <li>
-                        <a href="#" class="me-4 hover:underline md:me-6">Contact</a>
-                    </li>
-                </ul>
-            </div>
+{{define "content"}}
+<div class="grow h-fit flex flex-col" x-data="{{.data}}" x-init="$refs.contentx.textContent=content">    
+    <form hx-post="/{{.id}}" class="flex flex-col flex-grow gap-2">
+        <div class="flex gap-2">
+            <label for="id">Url</label><input class="text-base-950" name="id" type="text" x-model="id"/>
+            <label for="password">Password</label><input class="text-base-950" name="password" type="text"/>
+            <input name="is_encrypted" type="checkbox" value="true" x-model="is_encrypted"/><label for="is_encrypted">Encrypt</label>
+            <button type="submit" class="bg-base-300 text-base-950 px-2 rounded-lg">Save</button>                            
+            <button type="button" id="deleteButton" x-show="id" class="bg-base-300 text-base-950 px-2 rounded-lg">Delete</button>                            
         </div>
-    </body>
-</html>
+        <div x-ref="contentx" @input="content = $event.target.textContent" contenteditable="true" class="bg-base-600 flex-grow p-4"></div>
+        <input title="=" type="hidden" name="content" x-model="content"/>
+    </form>                      
+    <dialog>
+        <p>Do you want to delete?</p>
+        <form method="dialog">
+            <button type="button" hx-trigger="click" hx-delete="/{{.id}}">OK</button>
+            <button type="button" id="cancelButton" hx-trigger="click">Cancel</button>
+        </form>
+    </dialog>
+</div>
+{{end}}
+{{template "content" .}}

@@ -2,13 +2,13 @@ package app
 
 import (
 	"encoding/json"
-	"html/template"
 	"log/slog"
 	"net/http"
 
 	"github.com/ghostrepo00/go-note/config"
 	"github.com/ghostrepo00/go-note/internal/pkg/model"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 	"github.com/supabase-community/supabase-go"
 )
@@ -21,15 +21,21 @@ func NewWebServer(config *config.AppConfig) *webServer {
 	return &webServer{config}
 }
 
+func createMyRender() multitemplate.Renderer {
+	r := multitemplate.NewRenderer()
+	r.AddFromFiles("index", "web/template/shared/base.html", "web/template/home/index.html")
+	r.AddFromFiles("index_content", "web/template/home/index.html")
+	r.AddFromFiles("error", "web/template/shared/base.html", "web/template/shared/error.html")
+	return r
+}
+
 func ConfigureWebRouter(appConfig *config.AppConfig, dbClient *supabase.Client) *gin.Engine {
 	router := gin.Default()
+	router.HTMLRender = createMyRender()
 	router.Use(cors.Default())
 	router.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
 		c.HTML(http.StatusNotFound, "error", gin.H{"Status": 500, "Message": "Not Found", "Description": err.(error)})
 	}))
-
-	t := template.Must(template.ParseGlob("web/template/**/*.html"))
-	router.SetHTMLTemplate(t)
 
 	router.Static("/assets", "web/assets")
 	router.StaticFile("/favicon.ico", "web/favicon.ico")
