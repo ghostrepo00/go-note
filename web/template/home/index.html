@@ -1,20 +1,33 @@
+{{define "error_list"}}
+<ul>
+    {{range $error := .errors }}
+    <li>{{$error}}</li>
+    {{end}}
+</ul>
+{{end}}
+
 {{define "content"}}
-<div class="grow h-fit flex flex-col" x-data="{{.data}}" x-init="$refs.contentx.textContent=content">    
-    <form hx-post="/{{.id}}" class="flex flex-col flex-grow gap-2">
+<div id="content_root" class="grow h-fit flex flex-col" x-data="{{.data}}" x-init="$refs.contentx.textContent=content">    
+    <form hx-post="/{{.id}}" hx-target="#content_root" hx-swap="outerHTML" class="flex flex-col flex-grow gap-2">
+        <div id="errorSection">
+            {{block "error_list" .}}{{end}}
+        </div>
         <div class="flex gap-2">
-            <label for="id">Url</label><input class="text-base-950" name="id" type="text" x-model="id"/>
-            <label for="password">Password</label><input class="text-base-950" name="password" type="text"/>
+            <label for="id">Url</label><input class="text-base-950" name="id" type="text" placeholder="New Url"/>
+            <label for="password">Password</label><input class="text-base-950" name="password" type="text" placeholder="For edit and delete"/>
             <input name="is_encrypted" type="checkbox" value="true" x-model="is_encrypted"/><label for="is_encrypted">Encrypt</label>
-            <button type="submit" class="bg-base-300 text-base-950 px-2 rounded-lg">Save</button>                            
-            <button type="button" id="deleteButton" x-show="id" class="bg-base-300 text-base-950 px-2 rounded-lg">Delete</button>                            
+            <button type="submit" class="bg-base-300 text-base-950 px-2 rounded-lg">Save</button>
+            {{if .removable}}
+                <button type="button" id="deleteButton" class="bg-base-300 text-base-950 px-2 rounded-lg">Delete</button>
+            {{end}}
         </div>
         <div x-ref="contentx" @input="content = $event.target.textContent" contenteditable="true" class="bg-base-600 flex-grow p-4"></div>
         <input title="=" type="hidden" name="content" x-model="content"/>
-    </form>                      
+    </form>
     <dialog>
         <p>Do you want to delete?</p>
         <form method="dialog">
-            <button type="button" hx-trigger="click" hx-delete="/{{.id}}">OK</button>
+            <button type="button" onclick="app.closeDialog();" hx-include="[name='password']" hx-target="#errorSection" hx-post="/{{.id}}/delete">OK</button>
             <button type="button" id="cancelButton" hx-trigger="click">Cancel</button>
         </form>
     </dialog>

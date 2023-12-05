@@ -34,7 +34,7 @@ func ConfigureWebRouter(appConfig *config.AppConfig, dbClient *supabase.Client) 
 	router.HTMLRender = createMyRender()
 	router.Use(cors.Default())
 	router.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
-		c.HTML(http.StatusNotFound, "error", gin.H{"Status": 500, "Message": "Not Found", "Description": err.(error)})
+		c.HTML(http.StatusNotFound, "error", gin.H{"Status": 404, "Message": "Not Found", "Description": err.(error)})
 	}))
 
 	router.Static("/assets", "web/assets")
@@ -45,8 +45,8 @@ func ConfigureWebRouter(appConfig *config.AppConfig, dbClient *supabase.Client) 
 
 	router.GET("", handler.Default)
 	router.GET("/:id", handler.GetById)
-	router.DELETE("/:id", handler.DeleteById)
-	router.POST("", handler.Save)
+	router.POST("/:id/delete", handler.DeleteById)
+	router.POST("", handler.Create)
 	router.POST("/:id", handler.Save)
 
 	return router

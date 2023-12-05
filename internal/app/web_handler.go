@@ -2,8 +2,9 @@ package app
 
 import (
 	"encoding/json"
-	"log/slog"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/ghostrepo00/go-note/config"
 	"github.com/ghostrepo00/go-note/internal/pkg/model"
@@ -20,6 +21,7 @@ type WebHandler interface {
 	GetById(ctx *gin.Context)
 	DeleteById(c *gin.Context)
 	Save(ctx *gin.Context)
+	Create(ctx *gin.Context)
 }
 
 func NewWebHandler(appConfig *config.AppConfig, service AppService) *webHandler {
@@ -27,22 +29,31 @@ func NewWebHandler(appConfig *config.AppConfig, service AppService) *webHandler 
 }
 
 func (r *webHandler) Default(c *gin.Context) {
-	c.HTML(http.StatusOK, "index", gin.H{"title": r.AppConfig.Web.Title, "data": "{'content':'', 'value':'z'}"})
+	c.HTML(http.StatusOK, "index", gin.H{"title": r.AppConfig.Web.Title, "data": "{'content':''}"})
 }
 
 func (r *webHandler) GetById(c *gin.Context) {
 	id := c.Param("id")
-	slog.Info("request id", "id", id)
 	a, _ := r.Service.GetbyId(id)
 	x, _ := json.Marshal(a[0])
-	c.HTML(http.StatusOK, "index", gin.H{"id": id, "data": string(x)})
+	c.HTML(http.StatusOK, "index", gin.H{"id": id, "data": string(x), "removable": true})
 }
 
 func (r *webHandler) DeleteById(c *gin.Context) {
 	id := c.Param("id")
-	r.Service.DeletebyId(id)
-	slog.Info("request id", "id", id)
-	c.Header("HX-Redirect", "/")
+	formData := &model.FormData{}
+	c.Bind(formData)
+
+	if errs := r.Service.DeleteById(id, formData); errs != nil {
+		c.Writer.WriteHeader(http.StatusOK)
+		var errElement strings.Builder
+		for _, err := range errs {
+			errElement.WriteString(fmt.Sprintf("<li>%s</li>", err))
+		}
+		c.Writer.Write([]byte("<ul>" + errElement.String() + "</ul>"))
+	} else {
+		c.Header("HX-Redirect", "/"+formData.Id)
+	}
 }
 
 func (r *webHandler) Save(c *gin.Context) {
@@ -50,11 +61,22 @@ func (r *webHandler) Save(c *gin.Context) {
 	formData := &model.FormData{}
 	c.Bind(formData)
 
-	if outputPassword, err := r.Service.Save(id, formData); err != nil {
-		slog.Error("error", err, outputPassword)
-		c.AbortWithStatus(http.StatusInternalServerError)
+	if err := r.Service.Save(id, formData); err != nil {
+		x, _ := json.Marshal(formData)
+		c.HTML(http.StatusOK, "index_content", gin.H{"id": id, "data": string(x), "errors": err})
 	} else {
 		c.Header("HX-Redirect", "/"+formData.Id)
 	}
-	slog.Info("request id", "id", formData.Id, "content", formData.Content)
+}
+
+func (r *webHandler) Create(c *gin.Context) {
+	formData := &model.FormData{}
+	c.Bind(formData)
+
+	if err := r.Service.Create(formData); err != nil {
+		x, _ := json.Marshal(formData)
+		c.HTML(http.StatusOK, "index_content", gin.H{"data": string(x), "errors": err})
+	} else {
+		c.Header("HX-Redirect", "/"+formData.Id)
+	}
 }

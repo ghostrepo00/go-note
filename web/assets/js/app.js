@@ -1,4 +1,4 @@
-(function () {    
+const app = (function () {    
     const dialog = document.querySelector("dialog");
     const showButton = document.getElementById("deleteButton")
     const cancelButton = document.getElementById("cancelButton")
@@ -11,4 +11,8 @@
     cancelButton.addEventListener("click", () => {
         dialog.close();
     });
+
+    return {
+        closeDialog: () => {dialog.close();}
+    }
 })();
