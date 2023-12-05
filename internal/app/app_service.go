@@ -3,7 +3,6 @@ package app
 import (
 	"crypto/rand"
 	"errors"
-	"fmt"
 	"math/big"
 
 	"github.com/ghostrepo00/go-note/config"
@@ -20,8 +19,8 @@ type appService struct {
 type AppService interface {
 	GetbyId(id string) (result []*model.FormData, err error)
 	DeleteById(id string, data *model.FormData) (errs []error)
-	Save(id string, data *model.FormData) (errs []string)
-	Create(data *model.FormData) (errs []string)
+	Save(id string, data *model.FormData) (errs []error)
+	Create(data *model.FormData) (errs []error)
 }
 
 func NewAppService(appConfig *config.AppConfig, dbClient *supabase.Client) *appService {
@@ -88,7 +87,7 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func (r *appService) Save(id string, data *model.FormData) (errs []string) {
+func (r *appService) Save(id string, data *model.FormData) (errs []error) {
 	if initialPassword, err := r.ValidatePassword(id, data.Password); err == nil {
 		if data.Id == "" {
 			data.Id = id
@@ -99,20 +98,22 @@ func (r *appService) Save(id string, data *model.FormData) (errs []string) {
 		}
 		data.Password = initialPassword
 		r.DbClient.From("notes").Upsert(&data, "", "", "").Execute()
+	} else {
+		errs = append(errs, err)
 	}
 	return
 }
 
-func (r *appService) Create(data *model.FormData) (errs []string) {
+func (r *appService) Create(data *model.FormData) (errs []error) {
 	if data.Id == "" {
 		data.Id, _ = GenerateRandomId(5)
 	}
 
 	data.Password = HashPassword(data.Password)
 
-	if len(errs) == 0 {
-		a, _, _ := r.DbClient.From("notes").Insert(&data, false, "", "", "").Execute()
-		fmt.Println(a)
+	if _, _, err := r.DbClient.From("notes").Insert(&data, false, "", "", "").Execute(); err != nil {
+		errs = append(errs, err)
 	}
+
 	return
 }
