@@ -24,7 +24,7 @@ func NewWebServer(config *config.AppConfig) *webServer {
 func createMyRender() multitemplate.Renderer {
 	r := multitemplate.NewRenderer()
 	r.AddFromFiles("index", "web/template/shared/base.html", "web/template/home/index.html")
-	r.AddFromFiles("index_content", "web/template/home/index.html")
+	r.AddFromFiles("error_list", "web/template/shared/error_list.html")
 	r.AddFromFiles("error", "web/template/shared/base.html", "web/template/shared/error.html")
 	return r
 }
@@ -34,7 +34,8 @@ func ConfigureWebRouter(appConfig *config.AppConfig, dbClient *supabase.Client) 
 	router.HTMLRender = createMyRender()
 	router.Use(cors.Default())
 	router.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
-		c.HTML(http.StatusNotFound, "error", gin.H{"Status": 404, "Message": "Not Found", "Description": err.(error)})
+		slog.Error("Unhandled exception", "error", err.(error))
+		c.HTML(http.StatusInternalServerError, "error", gin.H{"Status": 500, "Message": "Internal Error"})
 	}))
 
 	router.Static("/assets", "web/assets")

@@ -2,9 +2,8 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/ghostrepo00/go-note/config"
 	"github.com/ghostrepo00/go-note/internal/pkg/model"
@@ -34,9 +33,12 @@ func (r *webHandler) Default(c *gin.Context) {
 
 func (r *webHandler) GetById(c *gin.Context) {
 	id := c.Param("id")
-	a, _ := r.Service.GetbyId(id)
-	x, _ := json.Marshal(a[0])
-	c.HTML(http.StatusOK, "index", gin.H{"id": id, "data": string(x), "removable": true})
+	if entity, _ := r.Service.GetbyId(id); len(entity) == 0 {
+		c.HTML(http.StatusNotFound, "error", gin.H{"Status": 404, "Message": "Record not found"})
+	} else {
+		data, _ := json.Marshal(entity[0])
+		c.HTML(http.StatusOK, "index", gin.H{"id": id, "data": string(data), "removable": true})
+	}
 }
 
 func (r *webHandler) DeleteById(c *gin.Context) {
@@ -44,15 +46,15 @@ func (r *webHandler) DeleteById(c *gin.Context) {
 	formData := &model.FormData{}
 	c.Bind(formData)
 
+	if formData.Password == "" {
+		c.HTML(http.StatusOK, "error_list", gin.H{"errors": &[]error{errors.New("Password is required")}})
+		return
+	}
+
 	if errs := r.Service.DeleteById(id, formData); errs != nil {
-		c.Writer.WriteHeader(http.StatusOK)
-		var errElement strings.Builder
-		for _, err := range errs {
-			errElement.WriteString(fmt.Sprintf("<li>%s</li>", err))
-		}
-		c.Writer.Write([]byte("<ul>" + errElement.String() + "</ul>"))
+		c.HTML(http.StatusOK, "error_list", gin.H{"errors": errs})
 	} else {
-		c.Header("HX-Redirect", "/"+formData.Id)
+		c.Header("HX-Redirect", "/")
 	}
 }
 
@@ -61,9 +63,13 @@ func (r *webHandler) Save(c *gin.Context) {
 	formData := &model.FormData{}
 	c.Bind(formData)
 
-	if err := r.Service.Save(id, formData); err != nil {
-		x, _ := json.Marshal(formData)
-		c.HTML(http.StatusOK, "index_content", gin.H{"id": id, "data": string(x), "errors": err})
+	if formData.Password == "" {
+		c.HTML(http.StatusOK, "error_list", gin.H{"errors": &[]error{errors.New("Password is required")}})
+		return
+	}
+
+	if errs := r.Service.Save(id, formData); errs != nil {
+		c.HTML(http.StatusOK, "error_list", gin.H{"errors": errs})
 	} else {
 		c.Header("HX-Redirect", "/"+formData.Id)
 	}
@@ -73,9 +79,13 @@ func (r *webHandler) Create(c *gin.Context) {
 	formData := &model.FormData{}
 	c.Bind(formData)
 
-	if err := r.Service.Create(formData); err != nil {
-		x, _ := json.Marshal(formData)
-		c.HTML(http.StatusOK, "index_content", gin.H{"data": string(x), "errors": err})
+	if formData.Password == "" {
+		c.HTML(http.StatusOK, "error_list", gin.H{"errors": &[]error{errors.New("Password is required")}})
+		return
+	}
+
+	if errs := r.Service.Create(formData); errs != nil {
+		c.HTML(http.StatusOK, "error_list", gin.H{"errors": errs})
 	} else {
 		c.Header("HX-Redirect", "/"+formData.Id)
 	}

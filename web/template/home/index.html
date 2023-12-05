@@ -1,14 +1,6 @@
-{{define "error_list"}}
-<ul>
-    {{range $error := .errors }}
-    <li>{{$error}}</li>
-    {{end}}
-</ul>
-{{end}}
-
 {{define "content"}}
-<div id="content_root" class="grow h-fit flex flex-col" x-data="{{.data}}" x-init="$refs.contentx.textContent=content">    
-    <form hx-post="/{{.id}}" hx-target="#content_root" hx-swap="outerHTML" class="flex flex-col flex-grow gap-2">
+<div class="grow h-fit flex flex-col" x-data="{{.data}}" x-init="$refs.contentx.textContent=content">    
+    <form hx-post="/{{.id}}" hx-target="#errorSection" class="flex flex-col flex-grow gap-2">
         <div id="errorSection">
             {{block "error_list" .}}{{end}}
         </div>

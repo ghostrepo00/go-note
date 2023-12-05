@@ -19,7 +19,7 @@ type appService struct {
 
 type AppService interface {
 	GetbyId(id string) (result []*model.FormData, err error)
-	DeleteById(id string, data *model.FormData) (errs []string)
+	DeleteById(id string, data *model.FormData) (errs []error)
 	Save(id string, data *model.FormData) (errs []string)
 	Create(data *model.FormData) (errs []string)
 }
@@ -42,31 +42,25 @@ func GenerateRandomId(length int) (string, error) {
 	return string(result), nil
 }
 
-func (r *appService) GetbyId(id string) (result []*model.FormData, err error) {
-	if id != "" {
-		_, err = r.DbClient.From("notes").Select("id, content, is_encrypted", "", false).Eq("id", id).ExecuteTo(&result)
-		fmt.Print(result, err)
+func (r *appService) ValidatePassword(id string, inputPassword string) (initialPassword string, err error) {
+	var resultSet *model.FormData
+	r.DbClient.From("notes").Select("password", "", false).Eq("id", id).Single().ExecuteTo(&resultSet)
+	if !CheckPasswordHash(inputPassword, resultSet.Password) {
+		return "", errors.New("Invalid Password")
 	}
+	return resultSet.Password, nil
+}
+
+func (r *appService) GetbyId(id string) (result []*model.FormData, err error) {
+	_, err = r.DbClient.From("notes").Select("id, content, is_encrypted", "", false).Eq("id", id).ExecuteTo(&result)
 	return
 }
 
-func (r *appService) DeleteById(id string, data *model.FormData) (errs []string) {
-	if data.Password == "" {
-		errs = append(errs, "Password is required")
-		return
-	}
-
-	var resultSet *model.FormData
-	if _, errp := r.DbClient.From("notes").Select("password", "", false).Eq("id", id).Single().ExecuteTo(&resultSet); errp != nil {
-		errs = append(errs, errp.Error())
-	} else {
-		if !CheckPasswordHash(data.Password, resultSet.Password) {
-			errs = append(errs, "Invalid password")
-		}
-	}
-
-	if len(errs) == 0 {
+func (r *appService) DeleteById(id string, data *model.FormData) (errs []error) {
+	if _, err := r.ValidatePassword(id, data.Password); err == nil {
 		r.DbClient.From("notes").Delete("", "").Eq("id", id).Execute()
+	} else {
+		errs = append(errs, err)
 	}
 	return
 }
@@ -95,21 +89,7 @@ func CheckPasswordHash(password, hash string) bool {
 }
 
 func (r *appService) Save(id string, data *model.FormData) (errs []string) {
-	if data.Password == "" {
-		errs = append(errs, "Password is required")
-		return
-	}
-
-	var resultSet *model.FormData
-	if _, errp := r.DbClient.From("notes").Select("password", "", false).Eq("id", id).Single().ExecuteTo(&resultSet); errp != nil {
-		errs = append(errs, errp.Error())
-	} else {
-		if !CheckPasswordHash(data.Password, resultSet.Password) {
-			errs = append(errs, "Invalid password")
-		}
-	}
-
-	if len(errs) == 0 {
+	if initialPassword, err := r.ValidatePassword(id, data.Password); err == nil {
 		if data.Id == "" {
 			data.Id = id
 		} else if id != data.Id {
@@ -117,24 +97,18 @@ func (r *appService) Save(id string, data *model.FormData) (errs []string) {
 				r.DbClient.From("notes").Delete("", "").Eq("id", id).Execute()
 			}()
 		}
-		data.Password = resultSet.Password
+		data.Password = initialPassword
 		r.DbClient.From("notes").Upsert(&data, "", "", "").Execute()
-
 	}
 	return
 }
 
 func (r *appService) Create(data *model.FormData) (errs []string) {
-	if data.Password == "" {
-		errs = append(errs, "Password is required")
-		return
-	}
-
-	data.Password = HashPassword(data.Password)
-
 	if data.Id == "" {
 		data.Id, _ = GenerateRandomId(5)
 	}
+
+	data.Password = HashPassword(data.Password)
 
 	if len(errs) == 0 {
 		a, _, _ := r.DbClient.From("notes").Insert(&data, false, "", "", "").Execute()
