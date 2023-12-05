@@ -1,6 +1,6 @@
 {{define "content"}}
 <div class="grow h-fit flex flex-col" x-data="{{.data}}" x-init="$refs.contentx.textContent=content">    
-    <form hx-post="/{{.id}}" hx-target="#errorSection" class="flex flex-col flex-grow gap-2">
+    <form hx-post="/{{.id}}" hx-target="#errorSection" class="flex flex-col flex-grow gap-2 px-20">
         <div id="errorSection" class="text-cinnabar-300">
             {{block "error_list" .}}{{end}}
         </div>
@@ -13,7 +13,7 @@
                 <button type="button" id="deleteButton" class="bg-base-300 text-base-950 px-2 rounded-lg">Delete</button>
             {{end}}
         </div>
-        <div x-ref="contentx" @input="content = $event.target.textContent" contenteditable="true" class="bg-base-600 flex-grow p-4"></div>
+        <div x-ref="contentx" @input="content = $event.target.textContent" contenteditable="true" class="bg-base-600 flex-grow p-4 rounded-xl"></div>
         <input title="=" type="hidden" name="content" x-model="content"/>
     </form>
     <dialog class="border-2 rounded-md p-4">
