@@ -1,12 +1,12 @@
 {{define "content"}}
 <div class="grow h-fit flex flex-col" x-data="{{.data}}" x-init="$refs.contentx.textContent=content">    
     <form hx-post="/{{.id}}" hx-target="#errorSection" class="flex flex-col flex-grow gap-2">
-        <div id="errorSection">
+        <div id="errorSection" class="text-cinnabar-300">
             {{block "error_list" .}}{{end}}
         </div>
         <div class="flex gap-2">
-            <label for="id">Url</label><input class="text-base-950" name="id" type="text" placeholder="New Url"/>
-            <label for="password">Password</label><input class="text-base-950" name="password" type="text" placeholder="For edit and delete"/>
+            <label for="id">Url</label><input class="text-base-950 px-2" name="id" type="text" placeholder="New Url"/>
+            <label for="password">Password</label><input class="text-base-950 px-2" name="password" type="password" placeholder="For edit and delete"/>
             <input name="is_encrypted" type="checkbox" value="true" x-model="is_encrypted"/><label for="is_encrypted">Encrypt</label>
             <button type="submit" class="bg-base-300 text-base-950 px-2 rounded-lg">Save</button>
             {{if .removable}}
@@ -16,11 +16,11 @@
         <div x-ref="contentx" @input="content = $event.target.textContent" contenteditable="true" class="bg-base-600 flex-grow p-4"></div>
         <input title="=" type="hidden" name="content" x-model="content"/>
     </form>
-    <dialog>
+    <dialog class="border-2 rounded-md p-4">
         <p>Do you want to delete?</p>
-        <form method="dialog">
-            <button type="button" onclick="app.closeDialog();" hx-include="[name='password']" hx-target="#errorSection" hx-post="/{{.id}}/delete">OK</button>
-            <button type="button" id="cancelButton" hx-trigger="click">Cancel</button>
+        <form method="dialog" class="flex gap-2">
+            <button class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" onclick="app.closeDialog();" hx-include="[name='password']" hx-target="#errorSection" hx-post="/{{.id}}/delete">OK</button>
+            <button class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" id="cancelButton" hx-trigger="click">Cancel</button>
         </form>
     </dialog>
 </div>

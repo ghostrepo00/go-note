@@ -3,6 +3,7 @@ package app
 import (
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/ghostrepo00/go-note/config"
@@ -87,11 +88,24 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
+func (r *appService) CheckDuplicateId(id string) error {
+	var found []*model.FormData
+	r.DbClient.From("notes").Select("id", "", false).Eq("id", id).ExecuteTo(&found)
+	if len(found) > 0 {
+		return errors.New(fmt.Sprintf("Id \"%s\" has been used by existing record", id))
+	}
+	return nil
+}
+
 func (r *appService) Save(id string, data *model.FormData) (errs []error) {
 	if initialPassword, err := r.ValidatePassword(id, data.Password); err == nil {
 		if data.Id == "" {
 			data.Id = id
 		} else if id != data.Id {
+			if err := r.CheckDuplicateId(data.Id); err != nil {
+				errs = append(errs, err)
+				return
+			}
 			go func() {
 				r.DbClient.From("notes").Delete("", "").Eq("id", id).Execute()
 			}()
@@ -107,6 +121,9 @@ func (r *appService) Save(id string, data *model.FormData) (errs []error) {
 func (r *appService) Create(data *model.FormData) (errs []error) {
 	if data.Id == "" {
 		data.Id, _ = GenerateRandomId(5)
+	} else if err := r.CheckDuplicateId(data.Id); err != nil {
+		errs = append(errs, err)
+		return
 	}
 
 	data.Password = HashPassword(data.Password)
