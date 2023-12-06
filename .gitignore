@@ -24,4 +24,3 @@ logs/*
 tmp/*
 node_modules/*
 web/assets/style/tailwind.css
-.env
