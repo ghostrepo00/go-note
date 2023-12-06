@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/ghostrepo00/go-note/config"
 	"github.com/ghostrepo00/go-note/internal/pkg/model"
@@ -34,19 +35,22 @@ func ConfigureWebRouter(appConfig *config.AppConfig, dbClient *supabase.Client) 
 	router.HTMLRender = createMyRender()
 	router.Use(cors.Default())
 	router.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
-		slog.Error("Unhandled exception", "error", err.(error))
+		slog.Error("Unhandled exception", "error", err)
 		c.HTML(http.StatusInternalServerError, "error", gin.H{"Status": 500, "Message": "Internal Error"})
 	}))
 
 	router.Static("/assets", "web/assets")
 	router.StaticFile("/favicon.ico", "web/favicon.ico")
 
-	var service AppService = NewAppService(appConfig, dbClient)
+	var crypto CryptoService = NewCryptoService(os.Getenv("CRYPTO_KEY"), os.Getenv("CRYPTO_IV_PAD"))
+	var service AppService = NewAppService(appConfig, dbClient, crypto)
 	var handler WebHandler = NewWebHandler(appConfig, service)
 
 	router.GET("", handler.Default)
 	router.GET("/:id", handler.GetById)
 	router.POST("/:id/delete", handler.DeleteById)
+	router.POST("/encrypt", handler.Encrypt)
+	router.POST("/decrypt", handler.Decrypt)
 	router.POST("", handler.Create)
 	router.POST("/:id", handler.Save)
 

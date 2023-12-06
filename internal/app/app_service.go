@@ -13,8 +13,9 @@ import (
 )
 
 type appService struct {
-	AppConfig *config.AppConfig
-	DbClient  *supabase.Client
+	AppConfig    *config.AppConfig
+	DbClient     *supabase.Client
+	CryptoClient CryptoService
 }
 
 type AppService interface {
@@ -22,10 +23,12 @@ type AppService interface {
 	DeleteById(id string, data *model.FormData) (errs []error)
 	Save(id string, data *model.FormData) (errs []error)
 	Create(data *model.FormData) (errs []error)
+	EncryptMessage(id string, data *model.FormData) (errs []error)
+	DecryptMessage(id string, data *model.FormData) (errs []error)
 }
 
-func NewAppService(appConfig *config.AppConfig, dbClient *supabase.Client) *appService {
-	return &appService{appConfig, dbClient}
+func NewAppService(appConfig *config.AppConfig, dbClient *supabase.Client, crypto CryptoService) *appService {
+	return &appService{appConfig, dbClient, crypto}
 }
 
 func GenerateRandomId(length int) (string, error) {
@@ -133,4 +136,30 @@ func (r *appService) Create(data *model.FormData) (errs []error) {
 	}
 
 	return
+}
+
+func (r *appService) EncryptMessage(id string, data *model.FormData) (errs []error) {
+	if id != "" {
+		if _, err := r.ValidatePassword(id, data.Password); err != nil {
+			errs = append(errs, err)
+			return
+		}
+	}
+
+	data.IsEncrypted = true
+	data.Content, _ = r.CryptoClient.Encrypt(data.Content, data.Password)
+	return nil
+}
+
+func (r *appService) DecryptMessage(id string, data *model.FormData) (errs []error) {
+	if id != "" {
+		if _, err := r.ValidatePassword(id, data.Password); err != nil {
+			errs = append(errs, err)
+			return
+		}
+	}
+
+	data.IsEncrypted = false
+	data.Content, _ = r.CryptoClient.Decrypt(data.Content, data.Password)
+	return nil
 }

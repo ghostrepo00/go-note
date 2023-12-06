@@ -21,6 +21,8 @@ type WebHandler interface {
 	DeleteById(c *gin.Context)
 	Save(ctx *gin.Context)
 	Create(ctx *gin.Context)
+	Encrypt(ctx *gin.Context)
+	Decrypt(ctx *gin.Context)
 }
 
 func NewWebHandler(appConfig *config.AppConfig, service AppService) *webHandler {
@@ -85,6 +87,40 @@ func (r *webHandler) Create(c *gin.Context) {
 	}
 
 	if errs := r.Service.Create(formData); errs != nil {
+		c.HTML(http.StatusOK, "error_list", gin.H{"errors": errs})
+	} else {
+		c.Header("HX-Redirect", "/"+formData.Id)
+	}
+}
+
+func (r *webHandler) Encrypt(c *gin.Context) {
+	id := c.Param("id")
+	formData := &model.FormData{}
+	c.Bind(formData)
+
+	if formData.Password == "" {
+		c.HTML(http.StatusOK, "error_list", gin.H{"errors": &[]error{errors.New("Password is required")}})
+		return
+	}
+
+	if errs := r.Service.EncryptMessage(id, formData); errs != nil {
+		c.HTML(http.StatusOK, "error_list", gin.H{"errors": errs})
+	} else {
+		c.Header("HX-Redirect", "/"+formData.Id)
+	}
+}
+
+func (r *webHandler) Decrypt(c *gin.Context) {
+	id := c.Param("id")
+	formData := &model.FormData{}
+	c.Bind(formData)
+
+	if formData.Password == "" {
+		c.HTML(http.StatusOK, "error_list", gin.H{"errors": &[]error{errors.New("Password is required")}})
+		return
+	}
+
+	if errs := r.Service.DecryptMessage(id, formData); errs != nil {
 		c.HTML(http.StatusOK, "error_list", gin.H{"errors": errs})
 	} else {
 		c.Header("HX-Redirect", "/"+formData.Id)
