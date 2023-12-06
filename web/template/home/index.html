@@ -5,6 +5,7 @@
             {{block "error_list" .}}{{end}}
         </div>
         <div class="flex gap-2">
+            <a href="/"><img src="/assets/img/home.svg" title="Home"/></a> 
             <label for="id">Url</label><input class="text-base-950 px-2" name="id" type="text" placeholder="New Url"/>
             <label for="password">Password</label><input class="text-base-950 px-2" name="password" type="password" placeholder="For edit and delete"/>
             <input name="is_encrypted" type="checkbox" value="true" x-model="is_encrypted"/><label for="is_encrypted">Encrypt</label>
@@ -12,8 +13,12 @@
             {{if .removable}}
                 <button type="button" id="deleteButton" class="bg-base-300 text-base-950 px-2 rounded-lg">Delete</button>
             {{end}}
-            <button class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" hx-target="#contentRoot" hx-post="/encrypt">Encrypt</button>
-            <button class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" hx-target="#contentRoot" hx-post="/decrypt">Decrypt</button>
+            
+            {{if not .is_encrypted}}
+            <button id="encButton" class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" hx-target="#contentRoot" hx-post="/encrypt">Encrypt</button>
+            {{else}}
+            <button id="decButton" class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" hx-target="#contentRoot" hx-post="/decrypt">Decrypt</button>
+            {{end}}
             
         </div>
         <div x-ref="contentx" @input="content = $event.target.textContent" contenteditable="true" class="bg-base-600 flex-grow p-4 rounded-xl"></div>

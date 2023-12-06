@@ -25,6 +25,7 @@ func NewWebServer(config *config.AppConfig) *webServer {
 func createMyRender() multitemplate.Renderer {
 	r := multitemplate.NewRenderer()
 	r.AddFromFiles("index", "web/template/shared/base.html", "web/template/home/index.html")
+	r.AddFromFiles("index_partial", "web/template/home/index.html")
 	r.AddFromFiles("error_list", "web/template/shared/error_list.html")
 	r.AddFromFiles("error", "web/template/shared/base.html", "web/template/shared/error.html")
 	return r

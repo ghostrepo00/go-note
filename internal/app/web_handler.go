@@ -30,7 +30,7 @@ func NewWebHandler(appConfig *config.AppConfig, service AppService) *webHandler 
 }
 
 func (r *webHandler) Default(c *gin.Context) {
-	c.HTML(http.StatusOK, "index", gin.H{"title": r.AppConfig.Web.Title, "data": "{'content':''}"})
+	c.HTML(http.StatusOK, "index", gin.H{"title": r.AppConfig.Web.Title, "data": "{'content':''}", "is_encrypted": false})
 }
 
 func (r *webHandler) GetById(c *gin.Context) {
@@ -99,15 +99,14 @@ func (r *webHandler) Encrypt(c *gin.Context) {
 	c.Bind(formData)
 
 	if formData.Password == "" {
-		c.HTML(http.StatusOK, "error_list", gin.H{"errors": &[]error{errors.New("Password is required")}})
+		data, _ := json.Marshal(formData)
+		c.HTML(http.StatusOK, "index_partial", gin.H{"id": id, "data": string(data), "removable": true, "errors": &[]error{errors.New("Password is required")}})
 		return
 	}
 
-	if errs := r.Service.EncryptMessage(id, formData); errs != nil {
-		c.HTML(http.StatusOK, "error_list", gin.H{"errors": errs})
-	} else {
-		c.Header("HX-Redirect", "/"+formData.Id)
-	}
+	errs := r.Service.EncryptMessage(id, formData)
+	data, _ := json.Marshal(formData)
+	c.HTML(http.StatusOK, "index_partial", gin.H{"id": id, "data": string(data), "removable": true, "errors": errs, "is_encrypted": true})
 }
 
 func (r *webHandler) Decrypt(c *gin.Context) {
@@ -116,13 +115,12 @@ func (r *webHandler) Decrypt(c *gin.Context) {
 	c.Bind(formData)
 
 	if formData.Password == "" {
-		c.HTML(http.StatusOK, "error_list", gin.H{"errors": &[]error{errors.New("Password is required")}})
+		data, _ := json.Marshal(formData)
+		c.HTML(http.StatusOK, "index_partial", gin.H{"id": id, "data": string(data), "removable": true, "errors": &[]error{errors.New("Password is required")}})
 		return
 	}
 
-	if errs := r.Service.DecryptMessage(id, formData); errs != nil {
-		c.HTML(http.StatusOK, "error_list", gin.H{"errors": errs})
-	} else {
-		c.Header("HX-Redirect", "/"+formData.Id)
-	}
+	errs := r.Service.DecryptMessage(id, formData)
+	data, _ := json.Marshal(formData)
+	c.HTML(http.StatusOK, "index_partial", gin.H{"id": id, "data": string(data), "removable": true, "errors": errs, "is_encrypted": false})
 }

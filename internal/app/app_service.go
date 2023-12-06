@@ -146,8 +146,11 @@ func (r *appService) EncryptMessage(id string, data *model.FormData) (errs []err
 		}
 	}
 
+	var err error
 	data.IsEncrypted = true
-	data.Content, _ = r.CryptoClient.Encrypt(data.Content, data.Password)
+	if data.Content, err = r.CryptoClient.Encrypt(data.Content, data.Password); err != nil {
+		errs = append(errs, err)
+	}
 	return nil
 }
 
@@ -159,7 +162,10 @@ func (r *appService) DecryptMessage(id string, data *model.FormData) (errs []err
 		}
 	}
 
+	var err error
 	data.IsEncrypted = false
-	data.Content, _ = r.CryptoClient.Decrypt(data.Content, data.Password)
+	if data.Content, err = r.CryptoClient.Decrypt(data.Content, data.Password); err != nil {
+		errs = append(errs, err)
+	}
 	return nil
 }
