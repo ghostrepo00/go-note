@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math/big"
 
 	"github.com/ghostrepo00/go-note/config"
@@ -19,12 +20,12 @@ type appService struct {
 }
 
 type AppService interface {
-	GetbyId(id string) (result []*model.FormData, err error)
-	DeleteById(id string, data *model.FormData) (errs []error)
-	Save(id string, data *model.FormData) (errs []error)
-	Create(data *model.FormData) (errs []error)
-	EncryptMessage(id string, data *model.FormData) (errs []error)
-	DecryptMessage(id string, data *model.FormData) (errs []error)
+	GetbyId(result *model.PageState)
+	DeleteById(data *model.PageState)
+	Save(data *model.PageState)
+	Create(data *model.PageState)
+	EncryptMessage(data *model.PageState)
+	DecryptMessage(data *model.PageState)
 }
 
 func NewAppService(appConfig *config.AppConfig, dbClient *supabase.Client, crypto CryptoService) *appService {
@@ -46,7 +47,7 @@ func GenerateRandomId(length int) (string, error) {
 }
 
 func (r *appService) ValidatePassword(id string, inputPassword string) (initialPassword string, err error) {
-	var resultSet *model.FormData
+	var resultSet *model.PageState
 	r.DbClient.From("notes").Select("password", "", false).Eq("id", id).Single().ExecuteTo(&resultSet)
 	if !CheckPasswordHash(inputPassword, resultSet.Password) {
 		return "", errors.New("Invalid Password")
@@ -54,16 +55,28 @@ func (r *appService) ValidatePassword(id string, inputPassword string) (initialP
 	return resultSet.Password, nil
 }
 
-func (r *appService) GetbyId(id string) (result []*model.FormData, err error) {
-	_, err = r.DbClient.From("notes").Select("id, content, is_encrypted", "", false).Eq("id", id).ExecuteTo(&result)
+func (r *appService) GetbyId(result *model.PageState) {
+	var queryResult []model.PageState
+
+	if _, err := r.DbClient.From("notes").Select("id, content, is_encrypted", "", false).Eq("id", result.PathId).ExecuteTo(&queryResult); err != nil {
+		slog.Error("Get by Id", "message", err)
+	}
+
+	if len(queryResult) > 0 {
+		result.Content = queryResult[0].Content
+		result.IsEncrypted = queryResult[0].IsEncrypted
+	} else {
+		result.ShowDeleteButton = false
+		result.Errors = append(result.Errors, errors.New("Record not found"))
+	}
 	return
 }
 
-func (r *appService) DeleteById(id string, data *model.FormData) (errs []error) {
-	if _, err := r.ValidatePassword(id, data.Password); err == nil {
-		r.DbClient.From("notes").Delete("", "").Eq("id", id).Execute()
+func (r *appService) DeleteById(state *model.PageState) {
+	if _, err := r.ValidatePassword(state.PathId, state.Password); err == nil {
+		r.DbClient.From("notes").Delete("", "").Eq("id", state.PathId).Execute()
 	} else {
-		errs = append(errs, err)
+		state.Errors = append(state.Errors, err)
 	}
 	return
 }
@@ -92,7 +105,7 @@ func CheckPasswordHash(password, hash string) bool {
 }
 
 func (r *appService) CheckDuplicateId(id string) error {
-	var found []*model.FormData
+	var found []*model.PageState
 	r.DbClient.From("notes").Select("id", "", false).Eq("id", id).ExecuteTo(&found)
 	if len(found) > 0 {
 		return errors.New(fmt.Sprintf("Id \"%s\" has been used by existing record", id))
@@ -100,72 +113,70 @@ func (r *appService) CheckDuplicateId(id string) error {
 	return nil
 }
 
-func (r *appService) Save(id string, data *model.FormData) (errs []error) {
-	if initialPassword, err := r.ValidatePassword(id, data.Password); err == nil {
-		if data.Id == "" {
-			data.Id = id
-		} else if id != data.Id {
-			if err := r.CheckDuplicateId(data.Id); err != nil {
-				errs = append(errs, err)
+func (r *appService) Save(state *model.PageState) {
+	if initialPassword, err := r.ValidatePassword(state.PathId, state.Password); err == nil {
+		if state.Id == "" {
+			state.Id = state.PathId
+		} else if state.PathId != state.Id {
+			if err := r.CheckDuplicateId(state.Id); err != nil {
+				state.Errors = append(state.Errors, err)
 				return
 			}
 			go func() {
-				r.DbClient.From("notes").Delete("", "").Eq("id", id).Execute()
+				r.DbClient.From("notes").Delete("", "").Eq("id", state.PathId).Execute()
 			}()
 		}
-		data.Password = initialPassword
-		r.DbClient.From("notes").Upsert(&data, "", "", "").Execute()
+		state.Password = initialPassword
+		r.DbClient.From("notes").Upsert(&state, "", "", "").Execute()
 	} else {
-		errs = append(errs, err)
+		state.Errors = append(state.Errors, err)
 	}
 	return
 }
 
-func (r *appService) Create(data *model.FormData) (errs []error) {
-	if data.Id == "" {
-		data.Id, _ = GenerateRandomId(5)
-	} else if err := r.CheckDuplicateId(data.Id); err != nil {
-		errs = append(errs, err)
+func (r *appService) Create(state *model.PageState) {
+	if state.Id == "" {
+		state.Id, _ = GenerateRandomId(5)
+	} else if err := r.CheckDuplicateId(state.Id); err != nil {
+		state.Errors = append(state.Errors, err)
 		return
 	}
 
-	data.Password = HashPassword(data.Password)
+	state.Password = HashPassword(state.Password)
 
-	if _, _, err := r.DbClient.From("notes").Insert(&data, false, "", "", "").Execute(); err != nil {
-		errs = append(errs, err)
+	if _, _, err := r.DbClient.From("notes").Insert(&state, false, "", "", "").Execute(); err != nil {
+		state.Errors = append(state.Errors, err)
 	}
 
 	return
 }
 
-func (r *appService) EncryptMessage(id string, data *model.FormData) (errs []error) {
-	if id != "" {
-		if _, err := r.ValidatePassword(id, data.Password); err != nil {
-			errs = append(errs, err)
+func (r *appService) EncryptMessage(state *model.PageState) {
+	if state.PathId != "" {
+		if _, err := r.ValidatePassword(state.PathId, state.Password); err != nil {
+			state.Errors = append(state.Errors, err)
 			return
 		}
 	}
 
 	var err error
-	data.IsEncrypted = true
-	if data.Content, err = r.CryptoClient.Encrypt(data.Content, data.Password); err != nil {
-		errs = append(errs, err)
+	state.IsEncrypted = true
+	if state.Content, err = r.CryptoClient.Encrypt(state.Content, state.Password); err != nil {
+		state.Errors = append(state.Errors, err)
 	}
-	return nil
 }
 
-func (r *appService) DecryptMessage(id string, data *model.FormData) (errs []error) {
-	if id != "" {
-		if _, err := r.ValidatePassword(id, data.Password); err != nil {
-			errs = append(errs, err)
+func (r *appService) DecryptMessage(state *model.PageState) {
+	if state.PathId != "" {
+		if _, err := r.ValidatePassword(state.PathId, state.Password); err != nil {
+			state.Errors = append(state.Errors, err)
 			return
 		}
 	}
 
 	var err error
-	data.IsEncrypted = false
-	if data.Content, err = r.CryptoClient.Decrypt(data.Content, data.Password); err != nil {
-		errs = append(errs, err)
+	state.IsEncrypted = false
+	if state.Content, err = r.CryptoClient.Decrypt(state.Content, state.Password); err != nil {
+		state.Errors = append(state.Errors, err)
 	}
-	return nil
 }

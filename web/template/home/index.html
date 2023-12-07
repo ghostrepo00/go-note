@@ -1,33 +1,34 @@
 {{define "content"}}
-<div id="contentRoot" class="grow h-fit flex flex-col" x-data="{{.data}}" x-init="$refs.contentx.textContent=content">    
-    <form hx-post="/{{.id}}" hx-target="#errorSection" class="flex flex-col flex-grow gap-2 px-20">
-        <div id="errorSection" class="text-cinnabar-300">
+<div id="contentRoot" class="grow h-fit flex flex-col">    
+    <form hx-post="/{{.PathId}}" hx-target="#contentRoot" hx-swap="outerHTML" class="flex flex-col flex-grow gap-2 px-20">
+        <div class="text-cinnabar-300">
             {{block "error_list" .}}{{end}}
         </div>
         <div class="flex gap-2">
             <a href="/"><img src="/assets/img/home.svg" title="Home"/></a> 
             <label for="id">Url</label><input class="text-base-950 px-2" name="id" type="text" placeholder="New Url"/>
             <label for="password">Password</label><input class="text-base-950 px-2" name="password" type="password" placeholder="For edit and delete"/>
-            <input name="is_encrypted" type="checkbox" value="true" x-model="is_encrypted"/><label for="is_encrypted">Encrypt</label>
             <button type="submit" class="bg-base-300 text-base-950 px-2 rounded-lg">Save</button>
-            {{if .removable}}
+            {{if .ShowDeleteButton}}
                 <button type="button" id="deleteButton" class="bg-base-300 text-base-950 px-2 rounded-lg">Delete</button>
             {{end}}
-            
-            {{if not .is_encrypted}}
-            <button id="encButton" class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" hx-target="#contentRoot" hx-post="/encrypt">Encrypt</button>
+
+            {{if not .IsEncrypted}}
+            <button id="encButton" class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" hx-target="#contentRoot" hx-post="{{.PathId}}/encrypt">Encrypt</button>
             {{else}}
-            <button id="decButton" class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" hx-target="#contentRoot" hx-post="/decrypt">Decrypt</button>
-            {{end}}
-            
+            <button id="decButton" class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" hx-target="#contentRoot" hx-post="{{.PathId}}/decrypt">Decrypt</button>
+            {{end}}            
         </div>
-        <div x-ref="contentx" @input="content = $event.target.textContent" contenteditable="true" class="bg-base-600 flex-grow p-4 rounded-xl"></div>
-        <input title="=" type="hidden" name="content" x-model="content"/>
+        <div class="flex-grow flex flex-col" x-data="{ 'content': '{{.Content}}'}" x-init="$refs.contentref.textContent=content">
+            <div x-ref="contentref" @input="content = $event.target.textContent" contenteditable="true" class="bg-base-600 flex-grow p-4 rounded-xl"></div>
+            <input title="" type="hidden" name="content" x-model="content"/>
+        </div>
+        <input title="" type="hidden" name="is_encrypted" value="{{.IsEncrypted}}"/>
     </form>
     <dialog class="border-2 rounded-md p-4">
         <p>Do you want to delete?</p>
         <form method="dialog" class="flex gap-2">
-            <button class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" onclick="app.closeDialog();" hx-include="[name='password']" hx-target="#errorSection" hx-post="/{{.id}}/delete">OK</button>
+            <button class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" onclick="app.closeDialog();" hx-include="#contentRoot" hx-target="#contentRoot" hx-swap="outerHTML"  hx-post="/{{.PathId}}/delete">OK</button>
             <button class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" id="cancelButton" hx-trigger="click">Cancel</button>
         </form>
     </dialog>

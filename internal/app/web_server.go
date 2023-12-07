@@ -24,8 +24,8 @@ func NewWebServer(config *config.AppConfig) *webServer {
 
 func createMyRender() multitemplate.Renderer {
 	r := multitemplate.NewRenderer()
-	r.AddFromFiles("index", "web/template/shared/base.html", "web/template/home/index.html")
-	r.AddFromFiles("index_partial", "web/template/home/index.html")
+	r.AddFromFiles("index", "web/template/shared/base.html", "web/template/home/index.html", "web/template/shared/error_list.html")
+	r.AddFromFiles("index_partial", "web/template/home/index.html", "web/template/shared/error_list.html")
 	r.AddFromFiles("error_list", "web/template/shared/error_list.html")
 	r.AddFromFiles("error", "web/template/shared/base.html", "web/template/shared/error.html")
 	return r
@@ -51,7 +51,9 @@ func ConfigureWebRouter(appConfig *config.AppConfig, dbClient *supabase.Client) 
 	router.GET("/:id", handler.GetById)
 	router.POST("/:id/delete", handler.DeleteById)
 	router.POST("/encrypt", handler.Encrypt)
+	router.POST("/:id/encrypt", handler.Encrypt)
 	router.POST("/decrypt", handler.Decrypt)
+	router.POST("/:id/decrypt", handler.Decrypt)
 	router.POST("", handler.Create)
 	router.POST("/:id", handler.Save)
 
