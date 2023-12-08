@@ -61,6 +61,12 @@ module.exports = {
               fontSize: '16px',
               lineHeight: "1.5"
             },
+            a: {
+              color: theme('textColor.cinnabar[400]'),
+              '&:hover': {
+                color: '#007bff',
+              },
+            },
           },
         },
       }),
