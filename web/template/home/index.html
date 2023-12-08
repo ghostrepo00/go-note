@@ -20,11 +20,11 @@
             {{end}}  
             <div id="spinner" class="loader htmx-indicator"></div>
         </div>
-        <div id="xData" class="flex-grow flex flex-col relative" x-data="{content: '{{.Content}}', isEdit: true}" x-init="$refs.contentref.innerHTML=content">
+        <div id="xData" class="flex-grow flex flex-col relative" x-data="{content: '{{.Content}}', isEdit: {{.IsEditMode}}}" x-init="$refs.contentref.innerHTML=(isEdit) ? content : app.markdownMode(content)">
             <div x-ref="contentref" @input="content = $event.target.innerHTML" :contenteditable="isEdit" class="bg-base-600 flex-grow p-4 rounded-xl min-w-full prose"></div>
             <input title="" type="hidden" name="content" x-model="content"/>
             <div class="absolute top-6 right-4">
-                <button type="button" x-show="isEdit" class="bg-base-300 text-base-950 px-2 rounded-lg w-24" x-on:click.prevent="app.markdownMode($refs.contentref)">Markdown</button>
+                <button type="button" x-show="isEdit" class="bg-base-300 text-base-950 px-2 rounded-lg w-24" x-on:click.prevent="$refs.contentref.innerHTML=app.markdownMode(content)">Markdown</button>
                 <button type="button" x-show="!isEdit" class="bg-base-300 text-base-950 px-2 rounded-lg w-24" x-on:click.prevent="app.editMode($refs.contentref, $data.content)">Edit</button>
             </div>
         </div>

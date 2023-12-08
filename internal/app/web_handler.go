@@ -37,6 +37,7 @@ func (r *webHandler) BindState(c *gin.Context) *model.PageState {
 		state.PageTitle = r.AppConfig.Web.Title
 		state.PathId = c.Param("id")
 		state.ShowDeleteButton = true
+		state.IsEditMode = true
 	}
 	return state
 }
@@ -50,6 +51,7 @@ func (r *webHandler) Default(c *gin.Context) {
 func (r *webHandler) GetById(c *gin.Context) {
 	state := r.BindState(c)
 	r.Service.GetbyId(state)
+	state.IsEditMode = false
 	c.HTML(http.StatusOK, "index", state)
 }
 

@@ -29,9 +29,15 @@ const app = (function () {
 
     return {
         closeDialog: () => {dialog.close();},
-        markdownMode: (element) => {
-            element.innerHTML = marked.parse([].slice.call(element.childNodes).map(a => a.textContent).join('\n'), markedOptions);
-            document.getElementById("xData")._x_dataStack[0].isEdit = false;
+        markdownMode: (content) => {
+            if (!!content) {
+                placeholder = document.createElement("span");
+                placeholder.innerHTML = content;            
+                document.getElementById("xData")._x_dataStack[0].isEdit = false;
+                return marked.parse([].slice.call(placeholder.childNodes).map(a => a.textContent).join('\n'), markedOptions);
+            } else {
+                return "";
+            }
         },
         editMode: (element, content) => {
             element.innerHTML = content
