@@ -1,6 +1,6 @@
 {{define "content"}}
 <div id="contentRoot" class="grow h-fit flex flex-col">    
-    <form hx-post="/{{.PathId}}" hx-target="#contentRoot" hx-swap="outerHTML" class="flex flex-col flex-grow gap-2 px-20">
+    <form hx-post="/{{.PathId}}" hx-target="#contentRoot" hx-swap="outerHTML" hx-indicator="#spinner" class="flex flex-col flex-grow gap-2 px-20">
         <div class="text-cinnabar-300">
             {{block "error_list" .}}{{end}}
         </div>
@@ -17,7 +17,8 @@
             <button id="encButton" class="bg-base-300 text-base-950 px-2 rounded-lg w-20" type="button" hx-target="#contentRoot" hx-post="{{.PathId}}/encrypt">Encrypt</button>
             {{else}}
             <button id="decButton" class="bg-base-300 text-base-950 px-2 rounded-lg w-20" type="button" hx-target="#contentRoot" hx-post="{{.PathId}}/decrypt">Decrypt</button>
-            {{end}}            
+            {{end}}  
+            <div id="spinner" class="loader htmx-indicator"></div>
         </div>
         <div id="xData" class="flex-grow flex flex-col relative" x-data="{content: '{{.Content}}', isEdit: true}" x-init="$refs.contentref.innerHTML=content">
             <div x-ref="contentref" @input="content = $event.target.innerHTML" :contenteditable="isEdit" class="bg-base-600 flex-grow p-4 rounded-xl min-w-full prose"></div>
