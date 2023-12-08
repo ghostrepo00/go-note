@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"io"
 	"log/slog"
 	"os"
@@ -15,7 +16,7 @@ import (
 
 func getLogFileName(appConfig *config.AppConfig) (result string) {
 	currentDate := time.Now()
-	return strings.Join([]string{appConfig.Log.Path, "/", currentDate.Format(appconstant.TimestampFormat), "_", appConfig.Log.FileName}, "")
+	return strings.Join([]string{appConfig.Log.FolderPath, "/", currentDate.Format(appconstant.TimestampFormat), "_", appConfig.Log.FileName}, "")
 }
 
 func useSlog(appConfig *config.AppConfig) (logFile *os.File, err error) {
@@ -33,7 +34,10 @@ func useSlog(appConfig *config.AppConfig) (logFile *os.File, err error) {
 }
 
 func main() {
-	if config, err := config.NewAppConfig("./config/config.json"); err != nil {
+	configPath := flag.String("config", "./config.json", "Config file path")
+	flag.Parse()
+
+	if config, err := config.NewAppConfig(*configPath); err != nil {
 		panic(err)
 	} else {
 		if fileLog, err := useSlog(config); err == nil {

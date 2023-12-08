@@ -6,8 +6,8 @@ import (
 )
 
 type LogSetting struct {
-	Path     string
-	FileName string
+	FolderPath string
+	FileName   string
 }
 
 type WebServerSetting struct {

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/ghostrepo00/go-note/config"
 	"github.com/ghostrepo00/go-note/internal/pkg/model"
@@ -22,26 +23,29 @@ func NewWebServer(config *config.AppConfig) *webServer {
 	return &webServer{config}
 }
 
-func createMyRender() multitemplate.Renderer {
+func createMyRender(appConfig *config.AppConfig) multitemplate.Renderer {
 	r := multitemplate.NewRenderer()
-	r.AddFromFiles("index", "web/template/shared/base.html", "web/template/home/index.html", "web/template/shared/error_list.html")
-	r.AddFromFiles("index_partial", "web/template/home/index.html", "web/template/shared/error_list.html")
-	r.AddFromFiles("error_list", "web/template/shared/error_list.html")
-	r.AddFromFiles("error", "web/template/shared/base.html", "web/template/shared/error.html")
+	r.AddFromFiles("index",
+		path.Join(appConfig.Web.BasePath, "web/template/shared/base.html"),
+		path.Join(appConfig.Web.BasePath, "web/template/home/index.html"),
+		path.Join(appConfig.Web.BasePath, "web/template/shared/error_list.html"))
+	r.AddFromFiles("index_partial", path.Join(appConfig.Web.BasePath, "web/template/home/index.html"), path.Join(appConfig.Web.BasePath, "web/template/shared/error_list.html"))
+	r.AddFromFiles("error_list", path.Join(appConfig.Web.BasePath, "web/template/shared/error_list.html"))
+	r.AddFromFiles("error", path.Join(appConfig.Web.BasePath, "web/template/shared/base.html"), path.Join(appConfig.Web.BasePath, "web/template/shared/error.html"))
 	return r
 }
 
 func ConfigureWebRouter(appConfig *config.AppConfig, dbClient *supabase.Client) *gin.Engine {
 	router := gin.Default()
-	router.HTMLRender = createMyRender()
+	router.HTMLRender = createMyRender(appConfig)
 	router.Use(cors.Default())
 	router.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
 		slog.Error("Unhandled exception", "error", err)
 		c.HTML(http.StatusInternalServerError, "error", gin.H{"Status": 500, "Message": "Internal Error"})
 	}))
 
-	router.Static("/assets", "web/assets")
-	router.StaticFile("/favicon.ico", "web/favicon.ico")
+	router.Static("/assets", path.Join(appConfig.Web.BasePath, "web/assets"))
+	router.StaticFile("/favicon.ico", path.Join(appConfig.Web.BasePath, "web/favicon.ico"))
 
 	var crypto CryptoService = NewCryptoService(os.Getenv("CRYPTO_KEY"), os.Getenv("CRYPTO_IV_PAD"))
 	var service AppService = NewAppService(appConfig, dbClient, crypto)
