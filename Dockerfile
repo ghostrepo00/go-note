@@ -29,7 +29,7 @@ COPY --from=builder /etc/passwd /etc/passwd
 
 # Copy the executable.
 COPY --from=builder /server/server /server/server
-COPY --from=builder /src/config/config.json.docker /server/config/config.json
+COPY --from=builder /src/config/config.docker.json /server/config/config.json
 COPY --from=builder /src/logs /server/logs
 COPY --from=builder /src/web /server/web
 
