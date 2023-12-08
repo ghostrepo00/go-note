@@ -43,8 +43,31 @@ module.exports = {
       }
     },
     extend: {
+      typography: ({ theme }) => ({
+        DEFAULT: {
+          css: {
+            '--tw-prose-body': theme('textColor.base[100]'),
+            '--tw-prose-headings': theme('textColor.base[100]'),
+            h1: {
+              margin: "0px"
+            },
+            p: {
+              fontSize: '16px',
+              lineHeight: "1.75",
+              wordBreak: "break-all",
+              whiteSpace: "normal"
+            },
+            ul: {
+              fontSize: '16px',
+              lineHeight: "1.5"
+            },
+          },
+        },
+      }),
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 }
 

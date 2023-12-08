@@ -4,24 +4,28 @@
         <div class="text-cinnabar-300">
             {{block "error_list" .}}{{end}}
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-4">
             <a href="/"><img src="/assets/img/home.svg" title="Home"/></a> 
-            <label for="id">Url</label><input class="text-base-950 px-2" name="id" type="text" placeholder="New Url"/>
-            <label for="password">Password</label><input class="text-base-950 px-2" name="password" type="password" placeholder="For edit and delete"/>
-            <button type="submit" class="bg-base-300 text-base-950 px-2 rounded-lg">Save</button>
+            <label for="id">Url <input class="text-base-950 px-2" name="id" type="text" placeholder="New Url"/></label>
+            <label for="password">Password <input class="text-base-950 px-2" name="password" type="password"/></label>
+            <button type="submit" class="bg-base-300 text-base-950 px-2 rounded-lg w-20">Save</button>
             {{if .ShowDeleteButton}}
-                <button type="button" id="deleteButton" class="bg-base-300 text-base-950 px-2 rounded-lg">Delete</button>
+                <button type="button" id="deleteButton" class="bg-base-300 text-base-950 px-2 rounded-lg w-20">Delete</button>
             {{end}}
 
             {{if not .IsEncrypted}}
-            <button id="encButton" class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" hx-target="#contentRoot" hx-post="{{.PathId}}/encrypt">Encrypt</button>
+            <button id="encButton" class="bg-base-300 text-base-950 px-2 rounded-lg w-20" type="button" hx-target="#contentRoot" hx-post="{{.PathId}}/encrypt">Encrypt</button>
             {{else}}
-            <button id="decButton" class="bg-base-300 text-base-950 px-2 rounded-lg w-16" type="button" hx-target="#contentRoot" hx-post="{{.PathId}}/decrypt">Decrypt</button>
+            <button id="decButton" class="bg-base-300 text-base-950 px-2 rounded-lg w-20" type="button" hx-target="#contentRoot" hx-post="{{.PathId}}/decrypt">Decrypt</button>
             {{end}}            
         </div>
-        <div class="flex-grow flex flex-col" x-data="{ 'content': '{{.Content}}'}" x-init="$refs.contentref.innerHTML=content">
-            <div x-ref="contentref" @input="content = $event.target.innerHTML" contenteditable="true" class="bg-base-600 flex-grow p-4 rounded-xl"></div>
+        <div id="xData" class="flex-grow flex flex-col relative" x-data="{content: '{{.Content}}', isEdit: true}" x-init="$refs.contentref.innerHTML=content">
+            <div x-ref="contentref" @input="content = $event.target.innerHTML" :contenteditable="isEdit" class="bg-base-600 flex-grow p-4 rounded-xl min-w-full prose"></div>
             <input title="" type="hidden" name="content" x-model="content"/>
+            <div class="absolute top-6 right-4">
+                <button type="button" x-show="isEdit" class="bg-base-300 text-base-950 px-2 rounded-lg w-24" x-on:click.prevent="app.markdownMode($refs.contentref)">Markdown</button>
+                <button type="button" x-show="!isEdit" class="bg-base-300 text-base-950 px-2 rounded-lg w-24" x-on:click.prevent="app.editMode($refs.contentref, $data.content)">Edit</button>
+            </div>
         </div>
         <input title="" type="hidden" name="is_encrypted" value="{{.IsEncrypted}}"/>
     </form>

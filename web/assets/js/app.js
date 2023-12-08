@@ -21,7 +21,21 @@ const app = (function () {
         }
     })
 
+    const markedOptions = {
+        pedantic: false,
+        gfm: true,
+        breaks: true
+    };
+
     return {
-        closeDialog: () => {dialog.close();}
+        closeDialog: () => {dialog.close();},
+        markdownMode: (element) => {
+            element.innerHTML = marked.parse([].slice.call(element.childNodes).map(a => a.textContent).join('\n'), markedOptions);
+            document.getElementById("xData")._x_dataStack[0].isEdit = false;
+        },
+        editMode: (element, content) => {
+            element.innerHTML = content
+            document.getElementById("xData")._x_dataStack[0].isEdit = true;
+        }
     }
 })();
