@@ -6,6 +6,13 @@ FROM golang:1.21-bullseye as builder
 WORKDIR /src
 COPY . .
 
+# Install nodejs and create tailwind css
+RUN apt-get update && apt-get install -y curl
+RUN curl -sL https://deb.nodesource.com/setup_20.x | bash -
+RUN apt-get install -y nodejs
+RUN npm install
+RUN npx tailwindcss -i ./web/assets/style/tailwind.input.css -o ./web/assets/style/tailwind.css
+
 # Fetch dependencies.
 # RUN go get -d -v
 RUN go mod download
@@ -13,7 +20,7 @@ RUN go mod verify
 
 #CMD go build -v
 # go build command with the -ldflags="-w -s" option to produce a smaller binary file by stripping debug information and symbol tables. 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -a -installsuffix cgo -o /server/server /src/cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -a -installsuffix cgo -o /server/server ./cmd/server
 
 #####################
 # MAKE SMALL BINARY #
