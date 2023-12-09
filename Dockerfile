@@ -33,9 +33,9 @@ COPY --from=builder /src/config/config.docker.json /server/config/config.json
 COPY --from=builder /src/logs /server/logs
 COPY --from=builder /src/web /server/web
 
-ENV SUPABASE=
-ENV CRYPTO_KEY=
-ENV CRYPTO_IV_PAD=
+#ENV SUPABASE=
+#ENV CRYPTO_KEY=
+#ENV CRYPTO_IV_PAD=
 
 EXPOSE 8888
 
