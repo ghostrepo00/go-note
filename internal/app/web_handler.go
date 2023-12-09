@@ -16,6 +16,8 @@ type webHandler struct {
 }
 
 type WebHandler interface {
+	UnexpectedError(c *gin.Context, err any)
+	AuthenticateUser() gin.HandlerFunc
 	Default(ctx *gin.Context)
 	GetById(ctx *gin.Context)
 	DeleteById(c *gin.Context)
@@ -36,91 +38,86 @@ func (r *webHandler) BindState(c *gin.Context) *model.PageState {
 	} else {
 		state.PageTitle = r.AppConfig.Web.Title
 		state.PathId = c.Param("id")
-		state.ShowDeleteButton = true
+		state.ShowDeleteButton = (state.PathId != "")
 		state.IsEditMode = true
 	}
 	return state
 }
 
+func (r *webHandler) UnexpectedError(c *gin.Context, err any) {
+	slog.Error("Unhandled exception", "error", err)
+	c.Header("HX-Redirect", "error")
+}
+
+func (r *webHandler) AuthenticateUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		state := r.BindState(c)
+		c.Set("state", state)
+
+		if c.Request.Method != "GET" && c.Request.Header["Content-Type"][0] == "application/x-www-form-urlencoded" {
+			if state.Password == "" {
+				state.Errors = append(state.Errors, errors.New("Password is required"))
+				c.HTML(http.StatusOK, "index_partial", state)
+				c.Abort()
+			}
+		}
+
+		c.Next()
+	}
+}
+
 func (r *webHandler) Default(c *gin.Context) {
-	state := r.BindState(c)
-	state.ShowDeleteButton = false
-	c.HTML(http.StatusOK, "index", state)
+	c.HTML(http.StatusOK, "index", c.MustGet("state").(*model.PageState))
 }
 
 func (r *webHandler) GetById(c *gin.Context) {
-	state := r.BindState(c)
+	state := c.MustGet("state").(*model.PageState)
 	r.Service.GetbyId(state)
 	state.IsEditMode = false
 	c.HTML(http.StatusOK, "index", state)
 }
 
 func (r *webHandler) DeleteById(c *gin.Context) {
-	state := r.BindState(c)
+	state := c.MustGet("state").(*model.PageState)
 
-	if state.Password == "" {
-		state.Errors = append(state.Errors, errors.New("Password is required"))
-	} else {
-		r.Service.DeleteById(state)
-		if len(state.Errors) == 0 {
-			c.Header("HX-Redirect", "/")
-		}
+	r.Service.DeleteById(state)
+	if len(state.Errors) == 0 {
+		c.Header("HX-Redirect", "/")
 	}
 
 	c.HTML(http.StatusOK, "index_partial", state)
 }
 
 func (r *webHandler) Save(c *gin.Context) {
-	state := r.BindState(c)
+	state := c.MustGet("state").(*model.PageState)
 
-	if state.Password == "" {
-		state.Errors = append(state.Errors, errors.New("Password is required"))
-	} else {
-		r.Service.Save(state)
-		if len(state.Errors) == 0 {
-			c.Header("HX-Redirect", "/"+state.Id)
-		}
+	r.Service.Save(state)
+	if len(state.Errors) == 0 {
+		c.Header("HX-Redirect", "/"+state.Id)
 	}
 
 	c.HTML(http.StatusOK, "index_partial", state)
 }
 
 func (r *webHandler) Create(c *gin.Context) {
-	state := r.BindState(c)
+	state := c.MustGet("state").(*model.PageState)
 
-	if state.Password == "" {
-		state.Errors = append(state.Errors, errors.New("Password is required"))
-		state.ShowDeleteButton = false
-	} else {
-		r.Service.Create(state)
-		if len(state.Errors) == 0 {
-			c.Header("HX-Redirect", "/"+state.Id)
-		}
+	r.Service.Create(state)
+	if len(state.Errors) == 0 {
+		c.Header("HX-Redirect", "/"+state.Id)
 	}
 
 	c.HTML(http.StatusOK, "index_partial", state)
 }
 
 func (r *webHandler) Encrypt(c *gin.Context) {
-	state := r.BindState(c)
-
-	if state.Password == "" {
-		state.Errors = append(state.Errors, errors.New("Password is required"))
-	} else {
-		r.Service.EncryptMessage(state)
-	}
-
+	state := c.MustGet("state").(*model.PageState)
+	r.Service.EncryptMessage(state)
 	c.HTML(http.StatusOK, "index_partial", state)
 }
 
 func (r *webHandler) Decrypt(c *gin.Context) {
-	state := r.BindState(c)
-
-	if state.Password == "" {
-		state.Errors = append(state.Errors, errors.New("Password is required"))
-	} else {
-		r.Service.DecryptMessage(state)
-	}
-
+	state := c.MustGet("state").(*model.PageState)
+	r.Service.DecryptMessage(state)
 	c.HTML(http.StatusOK, "index_partial", state)
 }
