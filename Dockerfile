@@ -37,5 +37,7 @@ ENV SUPABASE=
 ENV CRYPTO_KEY=
 ENV CRYPTO_IV_PAD=
 
+EXPOSE 8888/udp
+
 CMD [ "/server/server", "--config", "/server/config/config.json" ]
 
