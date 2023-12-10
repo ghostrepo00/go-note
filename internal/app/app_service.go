@@ -71,7 +71,6 @@ func (r *appService) GetbyId(result *model.PageState) {
 		result.ShowDeleteButton = false
 		result.Errors = append(result.Errors, errors.New("Record not found"))
 	}
-	return
 }
 
 func (r *appService) DeleteById(state *model.PageState) {
@@ -139,22 +138,22 @@ func (r *appService) Create(state *model.PageState) {
 	if _, _, err := r.DbClient.From("notes").Insert(&state, false, "", "", "").Execute(); err != nil {
 		state.Errors = append(state.Errors, err)
 	}
-
-	return
 }
 
 func (r *appService) EncryptMessage(state *model.PageState) {
 	var err error
-	state.IsEncrypted = true
 	if state.Content, err = r.CryptoClient.Encrypt(state.Content, state.Password); err != nil {
 		state.Errors = append(state.Errors, err)
+	} else {
+		state.IsEncrypted = true
 	}
 }
 
 func (r *appService) DecryptMessage(state *model.PageState) {
 	var err error
-	state.IsEncrypted = false
 	if state.Content, err = r.CryptoClient.Decrypt(state.Content, state.Password); err != nil {
 		state.Errors = append(state.Errors, err)
+	} else {
+		state.IsEncrypted = false
 	}
 }

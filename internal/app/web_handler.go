@@ -47,7 +47,9 @@ func (r *webHandler) BindState(c *gin.Context) *model.PageState {
 
 func (r *webHandler) UnexpectedError(c *gin.Context, err any) {
 	slog.Error("Unhandled exception", "error", err)
-	c.Header("HX-Redirect", "error")
+	state := c.MustGet("state").(*model.PageState)
+	state.Errors = append(state.Errors, errors.New("Internal error, please contact admin."))
+	c.HTML(http.StatusOK, "index_partial", state)
 }
 
 func (r *webHandler) AuthenticateUser() gin.HandlerFunc {
