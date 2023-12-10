@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/ghostrepo00/go-note/config"
 	"github.com/ghostrepo00/go-note/internal/pkg/model"
@@ -51,12 +52,24 @@ func (r *webHandler) UnexpectedError(c *gin.Context, err any) {
 
 func (r *webHandler) AuthenticateUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		state := r.BindState(c)
-		c.Set("state", state)
+		var state *model.PageState
+		if !strings.HasPrefix(c.Request.RequestURI, "/assets") && c.Request.RequestURI != "/favicon.ico" {
+			state = r.BindState(c)
+			c.Set("state", state)
+		}
 
 		if c.Request.Method != "GET" && c.Request.Header["Content-Type"][0] == "application/x-www-form-urlencoded" {
 			if state.Password == "" {
 				state.Errors = append(state.Errors, errors.New("Password is required"))
+			} else if state.PathId != "" {
+				if passwordFromDb, err := r.Service.ValidatePassword(state.PathId, state.Password); err != nil {
+					state.Errors = append(state.Errors, err)
+				} else {
+					state.Password = passwordFromDb // hashed
+				}
+			}
+
+			if len(state.Errors) > 0 {
 				c.HTML(http.StatusOK, "index_partial", state)
 				c.Abort()
 			}

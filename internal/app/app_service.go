@@ -22,6 +22,8 @@ type appService struct {
 type AppService interface {
 	GetbyId(result *model.PageState)
 	DeleteById(data *model.PageState)
+	ValidatePassword(id string, inputPassword string) (initialPassword string, err error)
+
 	Save(data *model.PageState)
 	Create(data *model.PageState)
 	EncryptMessage(data *model.PageState)
@@ -73,12 +75,7 @@ func (r *appService) GetbyId(result *model.PageState) {
 }
 
 func (r *appService) DeleteById(state *model.PageState) {
-	if _, err := r.ValidatePassword(state.PathId, state.Password); err == nil {
-		r.DbClient.From("notes").Delete("", "").Eq("id", state.PathId).Execute()
-	} else {
-		state.Errors = append(state.Errors, err)
-	}
-	return
+	r.DbClient.From("notes").Delete("", "").Eq("id", state.PathId).Execute()
 }
 
 func (r *appService) GenerateNewId() (result string, err error) {
@@ -114,24 +111,19 @@ func (r *appService) CheckDuplicateId(id string) error {
 }
 
 func (r *appService) Save(state *model.PageState) {
-	if initialPassword, err := r.ValidatePassword(state.PathId, state.Password); err == nil {
-		if state.Id == "" {
-			state.Id = state.PathId
-		} else if state.PathId != state.Id {
-			if err := r.CheckDuplicateId(state.Id); err != nil {
-				state.Errors = append(state.Errors, err)
-				return
-			}
-			go func() {
-				r.DbClient.From("notes").Delete("", "").Eq("id", state.PathId).Execute()
-			}()
+	if state.Id == "" {
+		state.Id = state.PathId
+	} else if state.PathId != state.Id {
+		if err := r.CheckDuplicateId(state.Id); err != nil {
+			state.Errors = append(state.Errors, err)
+			return
 		}
-		state.Password = initialPassword
-		r.DbClient.From("notes").Upsert(&state, "", "", "").Execute()
-	} else {
-		state.Errors = append(state.Errors, err)
+		go func() {
+			r.DbClient.From("notes").Delete("", "").Eq("id", state.PathId).Execute()
+		}()
 	}
-	return
+
+	r.DbClient.From("notes").Upsert(&state, "", "", "").Execute()
 }
 
 func (r *appService) Create(state *model.PageState) {
@@ -152,13 +144,6 @@ func (r *appService) Create(state *model.PageState) {
 }
 
 func (r *appService) EncryptMessage(state *model.PageState) {
-	if state.PathId != "" {
-		if _, err := r.ValidatePassword(state.PathId, state.Password); err != nil {
-			state.Errors = append(state.Errors, err)
-			return
-		}
-	}
-
 	var err error
 	state.IsEncrypted = true
 	if state.Content, err = r.CryptoClient.Encrypt(state.Content, state.Password); err != nil {
@@ -167,13 +152,6 @@ func (r *appService) EncryptMessage(state *model.PageState) {
 }
 
 func (r *appService) DecryptMessage(state *model.PageState) {
-	if state.PathId != "" {
-		if _, err := r.ValidatePassword(state.PathId, state.Password); err != nil {
-			state.Errors = append(state.Errors, err)
-			return
-		}
-	}
-
 	var err error
 	state.IsEncrypted = false
 	if state.Content, err = r.CryptoClient.Decrypt(state.Content, state.Password); err != nil {
