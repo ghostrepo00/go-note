@@ -14,7 +14,7 @@ Go Note is a secure note-taking application inspired by "rentry.co," enhanced wi
 
 - **Supabase**: Supabase as the database backend
 
-- **Air Live Reload**: For seamless development with Air Live Reload.
+- **Air Live Reload**: For seamless development with Air Live Reload
 
 - **Go Gin**
 
